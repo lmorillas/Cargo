@@ -51,6 +51,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $width = "100%";
         }
 
+        $text = <<<END
+<div class="ext_search" data-ex-role="exhibit-facet" data-ex-facet-class="TextSearch" data-ex-facet-label="Search in the map"></div>
+END;
+
         // Dumb attrs. The format must extract/deduce them.
         $attrs = array(
             'class' => 'cargoExhibit',
@@ -63,7 +67,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             'data-ex-map-height' => "540"
             );
 
-        $text = Html::rawElement( 'div', $attrs, '' );
+        $text = $text . Html::rawElement( 'div', $attrs, '' );
 
         return $text;
     }
