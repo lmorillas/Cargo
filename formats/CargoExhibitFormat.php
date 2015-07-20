@@ -6,7 +6,7 @@
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'height', 'width', 'zoom', 'lens','sort' );
+        return array( 'height', 'width', 'zoom', 'lens','sort', 'view' );
     }
 
 
@@ -81,8 +81,12 @@ END;
             'data-ex-role' => "view",
             );
 
+        if ( arraydata-ex-view-class="Tabular"_key_exists( 'view', $displayParams) ){
+            $attrs['data-ex-view-class'] = ucfirst( $displayParams['view'] );
+        }
+
         if ( array_key_exists( 'sort', $displayParams ) ) {
-             $attrs['data-ex-orders']= $displayParams['sort'];
+             $attrs['data-ex-orders'] = $displayParams['sort'];
          }
 
         $text = $text . Html::rawElement( 'div', $attrs, '' );
