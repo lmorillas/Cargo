@@ -81,7 +81,7 @@ END;
             'data-ex-role' => "view",
             );
 
-        if ( arraydata-ex-view-class="Tabular"_key_exists( 'view', $displayParams) ){
+        if ( array_key_exists( 'view', $displayParams) ){
             $attrs['data-ex-view-class'] = ucfirst( $displayParams['view'] );
         }
 
