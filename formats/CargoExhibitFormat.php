@@ -24,21 +24,20 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         //  Exhibit Scripts
         $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js"></script>';
         $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
-        // '<link href="http://beta.programaseducativosaragon.es/index.php?title=Billionaires_csv?action=raw" type="text/csv" rel="exhibit/data" />';
 
         $this->mOutput->addHeadItem( $ex_script, $ex_script );
         $this->mOutput->addHeadItem( $maps_script, $maps_script );
-        //$this->mOutput->addHeadItem( $billio, $billio );
-
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
         $queryParams = $this->sqlQueriesToQueryParams( $sqlQueries );
+
+        // format csv
         $queryParams['format'] = 'csv';
         $queryParams['limit'] = '1000';
         $dataurl = $ce->getFullURL( $queryParams );
+
         // Data imported as csv
         $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" />";
-
         $this->mOutput->addHeadItem($datalink, $datalink);
 
         if ( array_key_exists( 'width', $displayParams ) ) {
@@ -56,7 +55,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 END;
 
         // Dumb attrs. The format must extract/deduce them.
-        $attrs = array(
+        $attrs_map = array(
             'class' => 'cargoExhibit',
             'style' => "width: $width",
             'data-ex-role' => "view",
@@ -67,8 +66,12 @@ END;
             'data-ex-map-height' => "540"
             );
 
+        $attrs = array(
+            'class' => 'cargoExhibit',
+            'data-ex-role' => "view",
+            );
         $text = $text . Html::rawElement( 'div', $attrs, '' );
 
-        return $text;
+            return $text;
     }
 }
