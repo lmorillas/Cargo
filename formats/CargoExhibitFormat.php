@@ -58,6 +58,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
                 'data-ex-role' => "lens",
                 );
             $text = $text .  Html::rawElement( 'div', $attrs, $lens );
+        }
 
         $text = $text . <<<END
 <div class="ext_search" data-ex-role="exhibit-facet" data-ex-facet-class="TextSearch" data-ex-facet-label="Search in the map"></div>
@@ -79,6 +80,7 @@ END;
             'class' => 'cargoExhibit',
             'data-ex-role' => "view",
             );
+
         $text = $text . Html::rawElement( 'div', $attrs, '' );
 
 
