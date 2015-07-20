@@ -6,7 +6,7 @@
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'height', 'width', 'zoom', 'lens','sort', 'view' );
+        return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns' );
     }
 
 
@@ -87,6 +87,10 @@ END;
 
         if ( array_key_exists( 'sort', $displayParams ) ) {
              $attrs['data-ex-orders'] = $displayParams['sort'];
+         }
+
+         if ( array_key_exists( 'columns', $displayParams ) ) {
+             $attrs['data-ex-columns'] = $displayParams['columns'];
          }
 
         $text = $text . Html::rawElement( 'div', $attrs, '' );
