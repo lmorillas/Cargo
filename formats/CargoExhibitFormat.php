@@ -6,7 +6,7 @@
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'height', 'width', 'zoom' );
+        return array( 'height', 'width', 'zoom', 'lens' );
     }
 
 
@@ -24,7 +24,8 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         //  Exhibit Scripts
         $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js"></script>';
         $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
-
+        // resulting output
+        $text = "";
         $this->mOutput->addHeadItem( $ex_script, $ex_script );
         $this->mOutput->addHeadItem( $maps_script, $maps_script );
 
@@ -50,7 +51,15 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $width = "100%";
         }
 
-        $text = <<<END
+        if ( array_key_exists( 'lens', $displayParams ) ) {
+            $lens = $displayParams['lens'];
+            // Add on "px", if no unit is defined.
+             $attrs = array(
+                'data-ex-role' => "lens",
+                );
+            $text = $text .  Html::rawElement( 'div', $attrs, $lens );
+
+        $text = $text . <<<END
 <div class="ext_search" data-ex-role="exhibit-facet" data-ex-facet-class="TextSearch" data-ex-facet-label="Search in the map"></div>
 END;
 
@@ -71,6 +80,8 @@ END;
             'data-ex-role' => "view",
             );
         $text = $text . Html::rawElement( 'div', $attrs, '' );
+
+
 
             return $text;
     }
