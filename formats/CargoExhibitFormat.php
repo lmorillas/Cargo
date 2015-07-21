@@ -5,7 +5,7 @@
 
 $concatenate_dot = function ($p) { return '.' . $p; }
 
-funcion to_ex_param( $param_list ) {
+function to_ex_param( $param_list ) {
     $params = explode( ',' , $param_list);
     return implode(',' array_map($params, $concatenate_dot ));
 
