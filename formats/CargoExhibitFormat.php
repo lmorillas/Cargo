@@ -3,8 +3,17 @@
  * @author @lmorillas
  */
 
+
+    /**
+     * @param string $p
+     * @return string
+     **/
 function concatenate_dot ($p) { return '.' . trim($p); }
 
+    /**
+     * @param array $param_list
+     * @return array
+     **/
 function to_ex_param( $param_list ) {
     $params = explode( ',' , $param_list);
 
@@ -15,9 +24,8 @@ function to_ex_param( $param_list ) {
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns' );
+        return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns', 'facets' );
     }
-
 
     /**
      *
@@ -72,6 +80,19 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $text = $text . <<<END
 <div class="ext_search" data-ex-role="exhibit-facet" data-ex-facet-class="TextSearch" data-ex-facet-label="Search in the map"></div>
 END;
+        if ( array_key_exists( 'facets', $displayParams ) ) {
+            $lens = explode( ',' , $displayParams['facts'] );
+            // Add on "px", if no unit is defined.
+            foreach ($lens as $l) {
+                 $attrs = array(
+                    'data-ex-role' => "facet",
+                    'data-ex-expression' => '.'+ $l,
+                    'data-ex-show-missing' => 'false',
+                    'data-ex-facet-label' => ucfirst($l)
+                    );
+            $text = $text .  Html::rawElement( 'div', $attrs);
+            }
+        }
 
         // Dumb attrs. The format must extract/deduce them.
         $attrs_map = array(
