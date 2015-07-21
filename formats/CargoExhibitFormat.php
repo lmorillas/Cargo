@@ -3,6 +3,14 @@
  * @author @lmorillas
  */
 
+$concatenate_dot = function ($p) { return '.' . $p; }
+
+funcion to_ex_param( $param_list ) {
+    $params = explode( ',' , $param_list);
+    return implode(',' array_map($params, $concatenate_dot ));
+
+}
+
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
@@ -52,7 +60,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         }
 
         if ( array_key_exists( 'lens', $displayParams ) ) {
-            $lens = $displayParams['lens'];
+            $lens = to_ex_param( $displayParams['lens'] );
             // Add on "px", if no unit is defined.
              $attrs = array(
                 'data-ex-role' => "lens",
@@ -86,11 +94,11 @@ END;
         }
 
         if ( array_key_exists( 'sort', $displayParams ) ) {
-             $attrs['data-ex-orders'] = $displayParams['sort'];
+             $attrs['data-ex-orders'] = to_ex_param($displayParams['sort']);
          }
 
          if ( array_key_exists( 'columns', $displayParams ) ) {
-             $attrs['data-ex-columns'] = $displayParams['columns'];
+             $attrs['data-ex-columns'] = to_ex_param($displayParams['columns']);
          }
 
         $text = $text . Html::rawElement( 'div', $attrs, '' );
