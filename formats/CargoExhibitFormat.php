@@ -87,6 +87,7 @@ END;
             // Add on "px", if no unit is defined.
             foreach ($facets as $f) {
                  $attrs = array(
+                    'class' => " mw-collapsible mw-collapsed",
                     'data-ex-role' => "facet",
                     'data-ex-expression' => '.' . $f,
                     'data-ex-show-missing' => 'false',
