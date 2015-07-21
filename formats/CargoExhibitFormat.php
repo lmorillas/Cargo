@@ -81,7 +81,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 <div class="ext_search" data-ex-role="exhibit-facet" data-ex-facet-class="TextSearch" data-ex-facet-label="Search in the map"></div>
 END;
         if ( array_key_exists( 'facets', $displayParams ) ) {
-            $lens = explode( ',' , $displayParams['facts'] );
+            $lens = explode( ',' , $displayParams['facets'] );
             // Add on "px", if no unit is defined.
             foreach ($lens as $l) {
                  $attrs = array(
