@@ -88,7 +88,7 @@ END;
             foreach ($facets as $f) {
                  $attrs = array(
                     'data-ex-role' => "facet",
-                    'data-ex-expression' => '.'+ $f,
+                    'data-ex-expression' => '.' . $f,
                     'data-ex-show-missing' => 'false',
                     'data-ex-facet-label' => ucfirst($f)
                     );
