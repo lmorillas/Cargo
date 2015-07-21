@@ -80,15 +80,17 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $text = $text . <<<END
 <div class="ext_search" data-ex-role="exhibit-facet" data-ex-facet-class="TextSearch" data-ex-facet-label="Search in the map"></div>
 END;
+
+
         if ( array_key_exists( 'facets', $displayParams ) ) {
-            $lens = explode( ',' , $displayParams['facets'] );
+            $facets = explode( ',' , $displayParams['facets'] );
             // Add on "px", if no unit is defined.
-            foreach ($lens as $l) {
+            foreach ($facets as $f) {
                  $attrs = array(
                     'data-ex-role' => "facet",
-                    'data-ex-expression' => '.'+ $l,
+                    'data-ex-expression' => '.'+ $f,
                     'data-ex-show-missing' => 'false',
-                    'data-ex-facet-label' => ucfirst($l)
+                    'data-ex-facet-label' => ucfirst($f)
                     );
             $text = $text .  Html::rawElement( 'div', $attrs);
             }
