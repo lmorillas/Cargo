@@ -3,11 +3,11 @@
  * @author @lmorillas
  */
 
-$concatenate_dot = function ($p) { return '.' . $p; }
+function concatenate_dot ($p) { return '.' . $p; }
 
 function to_ex_param( $param_list ) {
     $params = explode( ',' , $param_list);
-    return implode(',' array_map($params, $concatenate_dot ));
+    return implode(',' array_map($params, concatenate_dot ));
 
 }
 
