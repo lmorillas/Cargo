@@ -89,7 +89,7 @@ END;
                  $attrs = array(
                     'data-ex-role' => "facet",
                     'data-ex-collapsible' => "true",
-                    'data-ex-collapsed' => "true,"
+                    'data-ex-collapsed' => "true",
                     'data-ex-expression' => '.' . $f,
                     'data-ex-show-missing' => 'false',
                     'data-ex-facet-label' => ucfirst($f)
