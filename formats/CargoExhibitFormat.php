@@ -114,9 +114,23 @@ END;
             'class' => 'cargoExhibit',
             'data-ex-role' => "view",
             );
-
+        // View
         if ( array_key_exists( 'view', $displayParams) ){
-            $attrs['data-ex-view-class'] = ucfirst( $displayParams['view'] );
+             $view = ucfirst( $displayParams['view'] );
+             $attrs['data-ex-view-class'] = $view;
+             if ( $view == 'Timeline'){
+                // head
+                $timeline_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/time/time-extension.js"/>';
+                $this->mOutput->addHeadItem( $timeline_script, $timeline_script );
+
+                // div
+                $attrs["data-ex-view-class"] = "Timeline";
+                $attrs["data-ex-start"] = ".time";
+                $attrs["data-ex-color-key"] = ".username";
+                $attrs["data-ex-top-band-unit"] = "minute";
+                $attrs["data-ex-top-band-pixels-per-unit"] = "140";
+                $attrs["data-ex-bottom-band-pixels-per-unit"] = "500";
+             }
         }
 
         if ( array_key_exists( 'sort', $displayParams ) ) {
