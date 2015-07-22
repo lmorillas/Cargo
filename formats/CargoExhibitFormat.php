@@ -62,16 +62,17 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $this->mOutput->addHeadItem( $timeline_script, $timeline_script );
 
         // div
-        $attrs = array(
-            "data-ex-role" => "view",
-            "data-ex-view-class" => "Timeline",
-            "data-ex-start" => ".time",
-            "data-ex-color-key" => ".username",
-            "data-ex-top-band-unit" => "minute",
-            "data-ex-top-band-pixels-per-unit" => "140",
-            "data-ex-bottom-band-pixels-per-unit" => "500"
-            );
-        return Html::rawElement( 'div', $attrs );
+        $this->attrs["data-ex-view-class"] = "Timeline";
+        $this->attrs["data-ex-start"] = ".time";
+        $this->attrs["data-ex-color-key"] = ".username";
+        $this->attrs["data-ex-top-band-unit"] = "minute";
+        $this->attrs["data-ex-top-band-pixels-per-unit"] = "140";
+        $this->attrs["data-ex-bottom-band-pixels-per-unit"] = "500";
+    }
+
+    function createDefaultView () {
+        $this->attrs = array();
+        $this->attrs['data-ex-role'] = 'view';
     }
 
     function createFacets( $facets ){
@@ -96,6 +97,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     * @param string $title
     * @return string
     */
+
     function createSearch ( $title ) {
         $attrs = array(
             'data-ex-role' => "exhibit-facet",
@@ -103,8 +105,8 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             'data-ex-facet-label' => $title
             );
         return Html::rawElement( 'div', $attrs);
-
     }
+
 
     /**
      *
@@ -154,14 +156,22 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             }
 
         // View
+        $this->createDefaultView();
         if ( array_key_exists( 'view', $displayParams) ){
              $view = ucfirst( $displayParams['view'] );
              switch ($view) {
                 case "Timeline":
-                    $text = $text . $this->createTimeline();
-                        break;
+                    $this->createTimeline();
+                    break;
+                case "Map":
+                    $this->createMap();
+                    break;
+                case "Tabular":
+                    $this->createTabular();
             }
         }
+        // test others
+        $text = $text .  Html::rawElement( 'div', $this->attrs );
 
         /*
         $attrs = array(
