@@ -145,12 +145,12 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         }
 
         // Search
-        $text = $text . this->createSearch("Search");
+        $text = $text . $this->createSearch("Search");
 
         // Facets
         if ( array_key_exists( 'facets', $displayParams ) ) {
             $facets = $displayParams['facets'];
-            $text = $text .  this->createFacets( $facets );
+            $text = $text .  $this->createFacets( $facets );
             }
         }
 
@@ -159,7 +159,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
              $view = ucfirst( $displayParams['view'] );
              switch ($view) {
                 case "Timeline":
-                    $text = $text . this->createTimeline();
+                    $text = $text . $this->createTimeline();
                         break;
             }
         }
