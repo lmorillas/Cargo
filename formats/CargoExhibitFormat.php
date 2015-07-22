@@ -152,7 +152,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $facets = $displayParams['facets'];
             $text = $text .  $this->createFacets( $facets );
             }
-        }
 
         // View
         if ( array_key_exists( 'view', $displayParams) ){
