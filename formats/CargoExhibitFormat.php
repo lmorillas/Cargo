@@ -21,6 +21,23 @@ function to_ex_param( $param_list ) {
 }
 
 
+function returnValue ( $keyVal ){
+    $_kv = explode("=", $keyVal);
+    return $_kv[count($_kv) - 1];
+}
+
+function fieldsForExhibit( $fields ){
+    $containsEquals = strpos( $fields, '=' );
+    if ( $containsEquals ){
+        return implode(',', array_map( "returnValue", explode( ',', $fields )));
+    }
+    else{
+        return $fields;
+    }
+
+}
+
+
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
@@ -83,13 +100,14 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
     function createTabular($fields){
         $this->attrs['data-ex-view-class'] = 'Tabular';
-        $this->attrs["data-ex-columns"] = to_ex_param( $fields) ;
+
+        $this->attrs["data-ex-columns"] = to_ex_param( fieldsForExhibit( $fields )) ;
         if ( array_key_exists( "labels", $this->displayParams ) ) {
             $this->attrs["data-ex-column-labels"] = $this->displayParams['labels'];
         }
         else {
             $this->attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst",
-            explode(',', $fields )))  ;
+            explode(',', fieldsForExhibit( $fields ) )))  ;
         }
     }
 
