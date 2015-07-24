@@ -27,6 +27,22 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns', 'facets' );
     }
 
+    function sortKey(){
+        if ( array_key_exists( 'sort', $this->displayParams ) ) {
+             $this->attrs['data-ex-orders'] = to_ex_param($this->displayParams['sort']);
+         }
+    }
+
+    /**
+    * @param string $param
+    * @param string $attr
+    */
+    function checkParam($param, $attr){
+        if ( array_key_exists( $param, $this->displayParams ) ) {
+             $this->attrs['data-ex-' . $attr] = to_ex_param($this->displayParams[$param]);
+         }
+
+    }
 
     function createMap(){
         $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
@@ -43,18 +59,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             'data-ex-zoom' => "8",
             'data-ex-map-height' => "540"
             );
-
-/*
-        if ( array_key_exists( 'width', $displayParams ) ) {
-            $width = $displayParams['width'];
-            // Add on "px", if no unit is defined.
-            if ( is_numeric( $width ) ) {
-                $width .= "px";
-            }
-        } else {
-            $width = "100%";
-        }
-*/
     }
 
     function createTimeline(){
@@ -73,7 +77,22 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     function createDefaultView () {
         $this->attrs = array();
         $this->attrs['data-ex-role'] = 'view';
+        $this->sortKey();
     }
+
+
+    function createTabular($fields){
+        $this->attrs['data-ex-view-class'] = 'Tabular';
+        $this->attrs["data-ex-columns"] = to_ex_param( $fields) ;
+        if ( array_key_exists( "labels", $this->displayParams ) ) {
+            $this->attrs["data-ex-column-labels"] = $this->displayParams['labels'];
+        }
+        else {
+            $this->attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst",
+            explode(',', $fields )))  ;
+        }
+    }
+
 
     function createFacets( $facets ){
     // explode facets and create the div for each of them
@@ -90,7 +109,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
                 );
         $text = $text . Html::rawElement( 'div', $attrs);
         }
-        return $text;
+        return Html::rawElement( 'div', array("class" => "facets"), $text);
     }
 
     /**
@@ -107,6 +126,18 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return Html::rawElement( 'div', $attrs);
     }
 
+    function createLens () {
+        $text = "";
+        if ( array_key_exists( 'lens', $this->displayParams ) ) {
+                $lens = to_ex_param( $this->displayParams['lens'] );
+                // Add on "px", if no unit is defined.
+                 $attrs = array(
+                    'data-ex-role' => "lens",
+                    );
+                $text = $text .  Html::rawElement( 'div', $attrs, $lens );
+            }
+        return $text;
+    }
 
     /**
      *
@@ -136,15 +167,9 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // Data imported as csv
         $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" />";
         $this->mOutput->addHeadItem($datalink, $datalink);
+        $this->displayParams = $displayParams;
 
-        if ( array_key_exists( 'lens', $displayParams ) ) {
-            $lens = to_ex_param( $displayParams['lens'] );
-            // Add on "px", if no unit is defined.
-             $attrs = array(
-                'data-ex-role' => "lens",
-                );
-            $text = $text .  Html::rawElement( 'div', $attrs, $lens );
-        }
+
 
         // Search
         $text = $text . $this->createSearch("Search");
@@ -154,6 +179,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $facets = $displayParams['facets'];
             $text = $text .  $this->createFacets( $facets );
             }
+
 
         // View
         $this->createDefaultView();
@@ -167,28 +193,14 @@ class CargoExhibitFormat extends CargoDeferredFormat {
                     $this->createMap();
                     break;
                 case "Tabular":
-                    $this->createTabular();
+                    $fields = $queryParams['fields'];
+                    $this->createTabular($fields);
             }
         }
         // test others
+
         $text = $text .  Html::rawElement( 'div', $this->attrs );
-
-        /*
-        $attrs = array(
-            'class' => 'cargoExhibit',
-            'data-ex-role' => "view",
-            );
-
-        if ( array_key_exists( 'sort', $displayParams ) ) {
-             $attrs['data-ex-orders'] = to_ex_param($displayParams['sort']);
-         }
-
-         if ( array_key_exists( 'columns', $displayParams ) ) {
-             $attrs['data-ex-columns'] = to_ex_param($displayParams['columns']);
-         }
-
-        $text = $text . Html::rawElement( 'div', $attrs, '' );
-        */
+        $text = $text . $this->createLens();
 
         return $text;
     }
