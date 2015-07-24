@@ -4,6 +4,16 @@
  */
 
 
+function fieldWithEq( $f ){
+        $containsEquals = strpos( $f, '=' );
+        if ( $containsEquals ){
+            return  explode("=", $f)[1];
+        }
+        else{
+            return $f;
+        }
+    }
+
     /**
      * @param string $p
      * @return string
@@ -97,17 +107,19 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $this->sortKey();
     }
 
-
     function createTabular($fields){
         $this->attrs['data-ex-view-class'] = 'Tabular';
 
-        $this->attrs["data-ex-columns"] = to_ex_param( fieldsForExhibit( $fields )) ;
+        $field_list =  explode( ',' , $fields);
+        $field_list = array_map( "fieldWithEq", $field_list);
+
+        $this->attrs["data-ex-columns"] = implode(',', array_map("concatenate_dot", $field_list));
+
         if ( array_key_exists( "labels", $this->displayParams ) ) {
             $this->attrs["data-ex-column-labels"] = $this->displayParams['labels'];
         }
         else {
-            $this->attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst",
-            explode(',', fieldsForExhibit( $fields ) )))  ;
+            $this->attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst", $field_list));
         }
     }
 
