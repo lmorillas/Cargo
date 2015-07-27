@@ -109,6 +109,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
     function createTabular($fields){
         $this->attrs['data-ex-view-class'] = 'Tabular';
+        $this->attrs["data-ex-paginate"] = "true";
 
         $field_list =  explode( ',' , $fields);
         $field_list = array_map( "fieldWithEq", $field_list);
@@ -179,11 +180,13 @@ class CargoExhibitFormat extends CargoDeferredFormat {
      * @throws MWException
      */
     function queryAndDisplay( $sqlQueries, $displayParams, $querySpecificParams = null ) {
+
+        // resulting output
+        $text = "";
+
         // Add necessary JS scripts.
         //  Exhibit Scripts
         $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js"></script>';
-        // resulting output
-        $text = "";
         $this->mOutput->addHeadItem( $ex_script, $ex_script );
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
@@ -197,9 +200,8 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // Data imported as csv
         $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" />";
         $this->mOutput->addHeadItem($datalink, $datalink);
+
         $this->displayParams = $displayParams;
-
-
 
         // Search
         $text = $text . $this->createSearch("Search");
