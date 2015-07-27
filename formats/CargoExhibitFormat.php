@@ -51,8 +51,9 @@ function fieldsForExhibit( $fields ){
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns', 'facets' );
+        return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns', 'facets', 'start', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
     }
+
 
     function sortKey(){
         if ( array_key_exists( 'sort', $this->displayParams ) ) {
@@ -75,30 +76,46 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
         $this->mOutput->addHeadItem( $maps_script, $maps_script );
 
-        // Dumb attrs. The format must extract/deduce them.
-        $attrs_map = array(
-            'class' => 'cargoExhibit',
-            'style' => "width: $width",
-            'data-ex-role' => "view",
-            'data-ex-view-class' =>"Map",
-            'data-ex-latlng' => ".coords",
-            'data-ex-center'=> "41.6561, -0.8773",
-            'data-ex-zoom' => "8",
-            'data-ex-map-height' => "540"
-            );
+         // div
+        $this->attrs["data-ex-view-class"] = "Map";
+
+        if ( array_key_exists( "latlng", $this->displayParams ) ) {
+            $this->attrs["data-ex-latlng"] = concatenate_dot($this->displayParams['latlng']);
+        }
+        if ( array_key_exists( "color", $this->displayParams ) ) {
+            $this->attrs["data-ex-color-key"] = concatenate_dot($this->displayParams['color']);
+        }
+        if ( array_key_exists( "center", $this->displayParams ) ) {
+            $this->attrs["data-ex-center"] = $this->displayParams['center'];
+        }
+        if ( array_key_exists( "zoom", $this->displayParams ) ) {
+            $this->attrs["data-ex-zoom"] = $this->displayParams['zoom'];
+        }
     }
 
-    function createTimeline(){
+    function createTimeline($displayParams){
+        // timeline script
         $timeline_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/time/time-extension.js"/>';
         $this->mOutput->addHeadItem( $timeline_script, $timeline_script );
 
         // div
         $this->attrs["data-ex-view-class"] = "Timeline";
-        $this->attrs["data-ex-start"] = ".time";
-        $this->attrs["data-ex-color-key"] = ".username";
-        $this->attrs["data-ex-top-band-unit"] = "minute";
-        $this->attrs["data-ex-top-band-pixels-per-unit"] = "140";
-        $this->attrs["data-ex-bottom-band-pixels-per-unit"] = "500";
+
+        if ( array_key_exists( "start", $this->displayParams ) ) {
+            $this->attrs["data-ex-start"] = concatenate_dot($this->displayParams['start']);
+        }
+        if ( array_key_exists( "color", $this->displayParams ) ) {
+            $this->attrs["data-ex-color-key"] = concatenate_dot($this->displayParams['color']);
+        }
+        if ( array_key_exists( "topunit", $this->displayParams ) ) {
+            $this->attrs["data-ex-top-band-unit"] = $this->displayParams['topunit'];
+        }
+        if ( array_key_exists( "toppx", $this->displayParams ) ) {
+            $this->attrs["data-ex-top-band-pixels-per-unit"] = $this->displayParams['toppx'];
+        }
+        if ( array_key_exists( "bottompx", $this->displayParams ) ) {
+            $this->attrs["data-ex-bottom-band-pixels-per-unit"] = $this->displayParams['bottompx'];
+        }
     }
 
     function createDefaultView () {
@@ -107,12 +124,16 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $this->sortKey();
     }
 
+    /**
+    * @param $fields string
+    *
+    */
     function createTabular($fields){
         $this->attrs['data-ex-view-class'] = 'Tabular';
         $this->attrs["data-ex-paginate"] = "true";
 
         $field_list =  explode( ',' , $fields);
-        $field_list = array_map( "fieldWithEq", $field_list);
+        $field_list = array_map( "fieldWithEq", $field_list);  // fields with =
 
         $this->attrs["data-ex-columns"] = implode(',', array_map("concatenate_dot", $field_list));
 
@@ -123,7 +144,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $this->attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst", $field_list));
         }
     }
-
 
     function createFacets( $facets ){
     // explode facets and create the div for each of them
@@ -158,16 +178,16 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     }
 
     function createLens () {
-        $text = "";
         if ( array_key_exists( 'lens', $this->displayParams ) ) {
                 $lens = to_ex_param( $this->displayParams['lens'] );
                 // Add on "px", if no unit is defined.
                  $attrs = array(
                     'data-ex-role' => "lens",
+                    'style' => "display: None;"
                     );
-                $text = $text .  Html::rawElement( 'div', $attrs, $lens );
+                return Html::rawElement( 'div', $attrs, $lens );
             }
-        return $text;
+        return '';
     }
 
     /**
@@ -219,7 +239,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
              $view = ucfirst( $displayParams['view'] );
              switch ($view) {
                 case "Timeline":
-                    $this->createTimeline();
+                    $this->createTimeline($displayParams);
                     break;
                 case "Map":
                     $this->createMap();
