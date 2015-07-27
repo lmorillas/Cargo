@@ -8,7 +8,7 @@
 
 if ( !defined( 'MEDIAWIKI' ) ) die();
 
-define( 'CARGO_VERSION', '0.8' );
+define( 'CARGO_VERSION', '0.9' );
 
 $wgExtensionCredits['parserhook'][] = array(
 	'path' => __FILE__,
@@ -249,6 +249,16 @@ function cargoRegisterParserFunctions( &$parser ) {
 }
 
 $wgCargoFieldTypes = array( 'Page', 'Text', 'Integer', 'Float', 'Date', 'Datetime', 'Boolean', 'Coordinates', 'Wikitext', 'File' );
+$wgCargoAllowedSQLFunctions = array(
+	// Math functions
+	'COUNT', 'FLOOR', 'CEIL', 'ROUND',
+	'MAX', 'MIN', 'AVG', 'SUM', 'POWER', 'LN', 'LOG',
+	// String functions
+	'CONCAT', 'LOWER', 'LCASE', 'UPPER', 'UCASE', 'SUBSTRING', 'FORMAT',
+	// Date functions
+	'DATE', 'DATE_FORMAT', 'DATE_ADD', 'DATE_SUB', 'DATE_DIFF'
+);
+
 $wgCargoDecimalMark = '.';
 $wgCargoDigitGroupingCharacter = ',';
 $wgCargoRecurringEventMaxInstances = 100;

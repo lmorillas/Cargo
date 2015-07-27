@@ -37,6 +37,8 @@ class CargoSQLQuery {
 		self::validateValues( $tablesStr, $fieldsStr, $whereStr, $joinOnStr, $groupByStr,
 			$havingStr, $orderByStr, $limitStr );
 
+		$cdb = CargoUtils::getDB();
+
 		$sqlQuery = new CargoSQLQuery();
 		$sqlQuery->mTablesStr = $tablesStr;
 		$sqlQuery->mTableNames = array_map( 'trim', explode( ',', $tablesStr ) );
@@ -57,12 +59,12 @@ class CargoSQLQuery {
 		$sqlQuery->handleVirtualFields();
 		$sqlQuery->handleVirtualCoordinateFields();
 		$sqlQuery->handleDateFields();
-		$sqlQuery->setMWJoinConds();
+		$sqlQuery->setMWJoinConds( $cdb );
 		$sqlQuery->mQueryLimit = $wgCargoDefaultQueryLimit;
 		if ( $limitStr != '' ) {
 			$sqlQuery->mQueryLimit = min( $limitStr, $wgCargoMaxQueryLimit );
 		}
-		$sqlQuery->addTablePrefixesToAll();
+		$sqlQuery->addTablePrefixesToAll( $cdb );
 
 		return $sqlQuery;
 	}
@@ -90,12 +92,18 @@ class CargoSQLQuery {
 		return $sqlQuery;
 	}
 
-	// Throw an error if there are forbidden values in any of the
-	// #cargo_query parameters -  some or all of them are potential
-	// security risks.
-	// It could be that, given the way #cargo_query is structured, only
-	// some of the parameters need to be checked for these strings,
-	// but we might as well validate all of them.
+	/**
+	 * Throw an error if there are forbidden values in any of the
+	 * #cargo_query parameters -  some or all of them are potential
+	 * security risks.
+	 *
+	 * It could be that, given the way #cargo_query is structured, only
+	 * some of the parameters need to be checked for these strings,
+	 * but we might as well validate all of them.
+	 *
+	 * The function setDescriptionsForFields() also does specific
+	 * validation of the "tables=" and "fields=" parameters.
+	 */
 	public static function validateValues( $tablesStr, $fieldsStr, $whereStr, $joinOnStr, $groupByStr,
 		$havingStr, $orderByStr, $limitStr ) {
 
@@ -110,10 +118,11 @@ class CargoSQLQuery {
 			'/\bselect\b/i' => 'SELECT',
 			'/\binto\b/i' => 'INTO',
 			'/\bfrom\b/i' => 'FROM',
-			'/\bload_file\b/i' => 'LOAD_FILE',
 			'/;/' => ';',
 			'/@/' => '@',
 			'/\<\?/' => '<?',
+			'/--/' => '--',
+			'/\/\*/' => '/*',
 		);
 		foreach ( $regexps as $regexp => $displayString ) {
 			if ( preg_match( $regexp, $tablesStr ) ||
@@ -295,7 +304,7 @@ class CargoSQLQuery {
 	 * conditions into the one that MediaWiki uses - this includes
 	 * adding the database prefix to each table name.
 	 */
-	function setMWJoinConds() {
+	function setMWJoinConds( $cdb ) {
 		if ( $this->mCargoJoinConds == null ) {
 			return;
 		}
@@ -305,9 +314,9 @@ class CargoSQLQuery {
 			$table2 = $cargoJoinCond['table2'];
 			$this->mJoinConds[$table2] = array(
 				$cargoJoinCond['joinType'],
-				'cargo__' . $cargoJoinCond['table1'] . '.' .
-				$cargoJoinCond['field1'] . '=' .
-				'cargo__' . $cargoJoinCond['table2'] .
+				$cdb->tableName( $cargoJoinCond['table1'] ) .
+				'.' . $cargoJoinCond['field1'] . '=' .
+				$cdb->tableName( $cargoJoinCond['table2'] ) .
 				'.' . $cargoJoinCond['field2']
 			);
 		}
@@ -327,8 +336,13 @@ class CargoSQLQuery {
 	 * Attempts to get the "field description" (type, etc.) of each field
 	 * specified in a SELECT call (via a #cargo_query call), using the set
 	 * of schemas for all data tables.
+	 *
+	 * Also does some validation of table names, field names, and any SQL
+	 * functions contained in this clause.
 	 */
 	function setDescriptionsForFields() {
+		global $wgCargoAllowedSQLFunctions;
+
 		$this->mFieldDescriptions = array();
 		$this->mFieldTables = array();
 		foreach ( $this->mAliasedFieldNames as $alias => $fieldName ) {
@@ -339,28 +353,41 @@ class CargoSQLQuery {
 				list( $tableName, $fieldName ) = explode( '.', $fieldName, 2 );
 			}
 			$description = new CargoFieldDescription();
-			// If it's a pre-defined field, we probably know the
+			// If it's a pre-defined field, we probably know its
 			// type.
 			if ( $fieldName == '_ID' || $fieldName == '_rowID' || $fieldName == '_pageID' ) {
 				$description->mType = 'Integer';
 			} elseif ( $fieldName == '_pageName' ) {
 				$description->mType = 'Page';
 			} elseif ( strpos( $tableName, '(' ) !== false || strpos( $fieldName, '(' ) !== false ) {
-				$fieldNameParts = explode( '(', $fieldName );
-				if ( count( $fieldNameParts ) > 1 ) {
-					$probableFunction = strtolower( trim( $fieldNameParts[0] ) );
-				} else {
+				$sqlFunctionMatches = array();
+				$sqlFunctionRegex = '/\b(\S*?)\s?\(/';
+				preg_match_all( $sqlFunctionRegex, $fieldName, $sqlFunctionMatches );
+				$sqlFunctions = array_map( 'strtoupper', $sqlFunctionMatches[1] );
+				if ( count( $sqlFunctions ) == 0 ) {
 					// Must be in the "table name", then.
-					$tableNameParts = explode( '(', $tableName );
-					$probableFunction = strtolower( trim( $tableNameParts[0] ) );
+					preg_match_all( $sqlFunctionRegex, $tableName, $sqlFunctionMatches );
+					$sqlFunctions = array_map( 'strtoupper', $sqlFunctionMatches[1] );
 				}
-				if ( in_array( $probableFunction, array( 'count', 'max', 'min', 'avg', 'sum', 'sqrt' ) ) ) {
+
+				// Throw an error if any of these functions
+				// are not in our "whitelist" of SQL functions.
+				foreach ( $sqlFunctions as $sqlFunction ) {
+					if ( !in_array( $sqlFunction, $wgCargoAllowedSQLFunctions ) ) {
+						throw new MWException( "Error: the SQL function \"$sqlFunction()\" is not allowed." );
+					}
+				}
+
+				$firstFunction = $sqlFunctions[0];
+				if ( in_array( $firstFunction, array( 'COUNT', 'FLOOR', 'CEIL', 'ROUND' ) ) ) {
 					$description->mType = 'Integer';
+				} elseif ( in_array( $firstFunction, array( 'MAX', 'MIN', 'AVG', 'SUM', 'POWER', 'LN', 'LOG' ) ) ) {
+					$description->mType = 'Float';
 				} elseif ( in_array(
-						$probableFunction, array( 'concat', 'lower', 'lcase', 'upper', 'ucase' ) ) ) {
-					// Do nothing.
-				} elseif ( in_array( $probableFunction,
-						array( 'date', 'date_format', 'date_add', 'date_sub', 'date_diff' ) ) ) {
+						$firstFunction, array( 'CONCAT', 'LOWER', 'LCASE', 'UPPER', 'UCASE', 'SUBSTRING', 'FORMAT' ) ) ) {
+					// Do nothing - it's text.
+				} elseif ( in_array( $firstFunction,
+						array( 'DATE', 'DATE_FORMAT', 'DATE_ADD', 'DATE_SUB', 'DATE_DIFF' ) ) ) {
 					$description->mType = 'Date';
 				}
 			} else {
@@ -389,7 +416,13 @@ class CargoSQLQuery {
 					$fieldName = substr( $fieldName, 0, strlen( $fieldName ) - 6 );
 				}
 				if ( $tableName != null ) {
-					$description = $this->mTableSchemas[$tableName]->mFieldDescriptions[$fieldName];
+					if ( !array_key_exists( $tableName, $this->mTableSchemas ) ) {
+						throw new MWException( "Error: no database table exists named \"$tableName\"." );
+					} elseif ( !array_key_exists( $fieldName, $this->mTableSchemas[$tableName]->mFieldDescriptions ) ) {
+						throw new MWException( "Error: no field named \"$fieldName\" found for the database table \"$tableName\"." );
+					} else {
+						$description = $this->mTableSchemas[$tableName]->mFieldDescriptions[$fieldName];
+					}
 				} elseif ( substr( $fieldName, -5 ) == '__lat' || substr( $fieldName, -5 ) == '__lon' ) {
 					// Special handling for lat/lon
 					// helper fields.
@@ -404,6 +437,12 @@ class CargoSQLQuery {
 							$tableName = $curTableName;
 							break;
 						}
+					}
+
+					// If we couldn't find a table name,
+					// throw an error.
+					if ( $tableName == '' ) {
+						throw new MWException( "Error: no field named \"$fieldName\" found for any of the specified database tables." );
 					}
 				}
 			}
@@ -883,16 +922,16 @@ class CargoSQLQuery {
 	 * prepended automatically by the MediaWiki query, while for
 	 * 'join on' the prefixes are added when the object is created.
 	 */
-	function addTablePrefixesToAll() {
+	function addTablePrefixesToAll( $cdb ) {
 		foreach ( $this->mAliasedFieldNames as $alias => $fieldName ) {
-			$this->mAliasedFieldNames[$alias] = self::addTablePrefixes( $fieldName );
+			$this->mAliasedFieldNames[$alias] = self::addTablePrefixes( $fieldName, $cdb );
 		}
 		if ( !is_null( $this->mWhereStr ) ) {
-			$this->mWhereStr = self::addTablePrefixes( $this->mWhereStr );
+			$this->mWhereStr = self::addTablePrefixes( $this->mWhereStr, $cdb );
 		}
-		$this->mGroupByStr = self::addTablePrefixes( $this->mGroupByStr );
-		$this->mHavingStr = self::addTablePrefixes( $this->mHavingStr );
-		$this->mOrderByStr = self::addTablePrefixes( $this->mOrderByStr );
+		$this->mGroupByStr = self::addTablePrefixes( $this->mGroupByStr, $cdb );
+		$this->mHavingStr = self::addTablePrefixes( $this->mHavingStr, $cdb );
+		$this->mOrderByStr = self::addTablePrefixes( $this->mOrderByStr, $cdb );
 	}
 
 	/**
@@ -904,7 +943,7 @@ class CargoSQLQuery {
 
 		foreach ( $this->mTableNames as $tableName ) {
 			if ( !$cdb->tableExists( $tableName ) ) {
-				throw new MWException( "Error: no database table exists for \"$tableName\"." );
+				throw new MWException( "Error: no database table exists named \"$tableName\"." );
 			}
 		}
 
@@ -916,10 +955,10 @@ class CargoSQLQuery {
 		if ( $this->mHavingStr != '' ) {
 			$selectOptions['HAVING'] = $this->mHavingStr;
 		}
-		// For some reason, we need to put quotes around the "ORDER By"
-		// value specifically, so that non-ASCII characters are
-		// handled correctly.
-		$selectOptions['ORDER BY'] = '"' . $this->mOrderByStr . '"';
+		// @TODO - need handling of non-ASCII characters in field
+		// names, which for some reason cause problems in "ORDER BY"
+		// specifically.
+		$selectOptions['ORDER BY'] = $this->mOrderByStr;
 		$selectOptions['LIMIT'] = $this->mQueryLimit;
 
 		// Aliases need to be surrounded by quotes when we actually
@@ -948,7 +987,7 @@ class CargoSQLQuery {
 		return $resultArray;
 	}
 
-	function addTablePrefixes( $string ) {
+	function addTablePrefixes( $string, $cdb ) {
 		// Create arrays for doing replacements of table names within
 		// the SQL by their "real" equivalents.
 		$tableNamePatterns = array();
@@ -957,8 +996,8 @@ class CargoSQLQuery {
 			// Is there a way to do this with just one regexp?
 			$tableNamePatterns[] = "/^$tableName\./";
 			$tableNamePatterns[] = "/(\W)$tableName\./";
-			$tableNameReplacements[] = "cargo__$tableName.";
-			$tableNameReplacements[] = "$1cargo__$tableName.";
+			$tableNameReplacements[] = $cdb->tableName( $tableName ) . ".";
+			$tableNameReplacements[] = "$1" . $cdb->tableName( $tableName ) . ".";
 		}
 
 		return preg_replace( $tableNamePatterns, $tableNameReplacements, $string );

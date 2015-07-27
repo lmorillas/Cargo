@@ -16,25 +16,6 @@ class CargoStore {
 	const YEAR_ONLY = 3;
 
 	/**
-	 * Gets the template page where this table is defined -
-	 * hopefully there's exactly one of them.
-	 */
-	public static function getTemplateIDForDBTable( $tableName ) {
-		$dbr = wfGetDB( DB_SLAVE );
-		$res = $dbr->select( 'page_props', array(
-			'pp_page'
-			), array(
-			'pp_value' => $tableName,
-			'pp_propname' => 'CargoTableName'
-			)
-		);
-		if ( !$row = $dbr->fetchRow( $res ) ) {
-			return null;
-		}
-		return $row['pp_page'];
-	}
-
-	/**
 	 * Parses one half of a set of coordinates into a number.
 	 *
 	 * Copied from Miga, also written by Yaron Koren
@@ -352,9 +333,9 @@ class CargoStore {
 							// one is there,
 							// there's probably no
 							// time.
-							if ( strpos( $cur_value, '00' ) === false &&
-								strpos( $cur_value, 'AM' ) === false &&
-								strpos( $cur_value, 'am' ) === false ) {
+							if ( strpos( $curValue, '00' ) === false &&
+								strpos( $curValue, 'AM' ) === false &&
+								strpos( $curValue, 'am' ) === false ) {
 								$precision = self::DATE_ONLY;
 							}
 							// Either way, we just
@@ -398,7 +379,7 @@ class CargoStore {
 
 		$cdb = CargoUtils::getDB();
 
-		$res = $cdb->select( $tableName, 'MAX(_ID) AS ID' );
+		$res = $cdb->select( $tableName, 'MAX(_ID) AS "ID"' );
 		$row = $cdb->fetchRow( $res );
 		$curRowID = $row['ID'] + 1;
 		$tableFieldValues['_ID'] = $curRowID;

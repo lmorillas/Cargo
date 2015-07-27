@@ -1042,9 +1042,8 @@ END;
 	}
 
 	function getQueryInfo() {
-		global $wgDBprefix;
+		$cdb = CargoUtils::getDB();
 
-		$cargoPrefix = $wgDBprefix . 'cargo__';
 		$tableNames = array( $this->tableName );
 		$conds = array();
 		$joinConds = array();
@@ -1055,7 +1054,7 @@ END;
 				$tableNames[] = $fieldTableName;
 				$joinConds[$fieldTableName] = array(
 					'LEFT OUTER JOIN',
-					$cargoPrefix . $this->tableName . '._ID = ' . $cargoPrefix . $fieldTableName . '._rowID'
+					$cdb->tableName( $this->tableName ) . '._ID = ' . $cdb->tableName( $fieldTableName ) . '._rowID'
 				);
 			}
 		}
@@ -1104,7 +1103,8 @@ END;
 	 */
 	protected function outputResults( $out, $skin, $dbr, $res, $num, $offset ) {
 		$valuesTable = array();
-		while ( $row = $dbr->fetchRow( $res ) ) {
+		$cdb = CargoUtils::getDB();
+		while ( $row = $cdb->fetchRow( $res ) ) {
 			$valuesTable[] = array( 'title' => $row['title'] );
 		}
 		$queryDisplayer = new CargoQueryDisplayer();

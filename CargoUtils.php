@@ -68,6 +68,52 @@ class CargoUtils {
 		return $row['pp_value'];
 	}
 
+	/**
+	 * Similar to getPageProp().
+	 */
+	public static function getAllPageProps( $pageProp ) {
+		$dbr = wfGetDB( DB_SLAVE );
+		$res = $dbr->select( 'page_props', array(
+			'pp_page',
+			'pp_value'
+			), array(
+			'pp_propname' => $pageProp
+			)
+		);
+
+		$pagesPerValue = array();
+		while ( $row = $dbr->fetchRow( $res ) ) {
+			$pageID = $row['pp_page'];
+			$pageValue = $row['pp_value'];
+			if ( array_key_exists( $pageValue, $pagesPerValue ) ) {
+				$pagesPerValue[$pageValue][] = $pageID;
+			} else {
+				$pagesPerValue[$pageValue] = array( $pageID );
+			}
+		}
+
+		return $pagesPerValue;
+	}
+
+	/**
+	 * Gets the template page where this table is defined -
+	 * hopefully there's exactly one of them.
+	 */
+	public static function getTemplateIDForDBTable( $tableName ) {
+		$dbr = wfGetDB( DB_SLAVE );
+		$res = $dbr->select( 'page_props', array(
+			'pp_page'
+			), array(
+			'pp_value' => $tableName,
+			'pp_propname' => 'CargoTableName'
+			)
+		);
+		if ( !$row = $dbr->fetchRow( $res ) ) {
+			return null;
+		}
+		return $row['pp_page'];
+	}
+
 	public static function formatError( $errorString ) {
 		return '<div class="error">' . $errorString . '</div>';
 	}
@@ -140,19 +186,46 @@ class CargoUtils {
 			return array();
 		}
 
+		$ignoreNextChar = false;
 		$returnValues = array();
 		$numOpenParentheses = 0;
+		$numOpenSingleQuotes = 0;
+		$numOpenDoubleQuotes = 0;
 		$curReturnValue = '';
 
 		for ( $i = 0; $i < strlen( $string ); $i++ ) {
 			$curChar = $string{$i};
-			if ( $curChar == '(' ) {
+
+			if ( $ignoreNextChar ) {
+				// If previous character was a backslash,
+				// ignore the current one, since it's escaped.
+				// What if this one is a backslash too?
+				// Doesn't matter - it's escaped.
+				$ignoreNextChar = false;
+			} elseif ( $curChar == '(' ) {
 				$numOpenParentheses++;
 			} elseif ( $curChar == ')' ) {
 				$numOpenParentheses--;
+			} elseif ( $curChar == '\'' ) {
+				if ( $numOpenSingleQuotes == 0 ) {
+					$numOpenSingleQuotes = 1;
+				} else {
+					$numOpenSingleQuotes = 0;
+				}
+			} elseif ( $curChar == '"' ) {
+				if ( $numOpenDoubleQuotes == 0 ) {
+					$numOpenDoubleQuotes = 1;
+				} else {
+					$numOpenDoubleQuotes = 0;
+				}
+			} elseif ( $curChar == '\\' ) {
+				$ignoreNextChar = true;
 			}
 
-			if ( $curChar == $delimiter && $numOpenParentheses == 0 ) {
+			if ( $curChar == $delimiter &&
+			$numOpenParentheses == 0 &&
+			$numOpenSingleQuotes == 0 &&
+			$numOpenDoubleQuotes == 0 ) {
 				$returnValues[] = trim( $curReturnValue );
 				$curReturnValue = '';
 			} else {
@@ -212,20 +285,35 @@ class CargoUtils {
 		return $value;
 	}
 
+	public static function parsePageForStorage( $title, $pageContents ) {
+		// @TODO - is there a "cleaner" way to get a page to be parsed?
+		global $wgParser;
+
+		// Special handling for the Approved Revs extension.
+		$pageText = null;
+		$approvedText = null;
+		if ( class_exists( 'ApprovedRevs' ) ) {
+			$approvedText = ApprovedRevs::getApprovedContent( $title );
+		}
+		if ( $approvedText != null ) {
+			$pageText = $approvedText;
+		} else {
+			$pageText = $pageContents;
+		}
+		$wgParser->parse( $pageText, $title, new ParserOptions() );
+	}
+
 	/**
 	 * Drop, and then create again, the database table(s) holding the
 	 * data for this template.
 	 * Why "tables"? Because every field that holds a list of values gets
 	 * its own helper table.
 	 *
-	 * @global string $wgDBtype
 	 * @param int $templatePageID
 	 * @return boolean
 	 * @throws MWException
 	 */
-	public static function recreateDBTablesForTemplate( $templatePageID ) {
-		global $wgDBtype;
-
+	public static function recreateDBTablesForTemplate( $templatePageID, $tableName = null ) {
 		$tableSchemaString = self::getPageProp( $templatePageID, 'CargoFields' );
 		// First, see if there even is DB storage for this template -
 		// if not, exit.
@@ -251,11 +339,15 @@ class CargoUtils {
 
 		$dbr->delete( 'cargo_tables', array( 'template_id' => $templatePageID ) );
 
-		$tableName = self::getPageProp( $templatePageID, 'CargoTableName' );
+		if ( $tableName == null ) {
+			$tableName = self::getPageProp( $templatePageID, 'CargoTableName' );
+		}
+
 		// Unfortunately, there is not yet a 'CREATE TABLE' wrapper
 		// in the MediaWiki DB API, so we have to call SQL directly.
-		$intTypeString = self::fieldTypeToSQLType( 'Integer', $wgDBtype );
-		$textTypeString = self::fieldTypeToSQLType( 'Text', $wgDBtype );
+		$dbType = $cdb->getType();
+		$intTypeString = self::fieldTypeToSQLType( 'Integer', $dbType );
+		$textTypeString = self::fieldTypeToSQLType( 'Text', $dbType );
 
 		$createSQL = "CREATE TABLE " .
 			$cdb->tableName( $tableName ) . ' ( ' .
@@ -281,17 +373,17 @@ class CargoUtils {
 				$createSQL .= $textTypeString;
 			} else {
 				$createSQL .= ", $fieldName ";
-				$createSQL .= self::fieldTypeToSQLType( $fieldType, $wgDBtype, $size );
+				$createSQL .= self::fieldTypeToSQLType( $fieldType, $dbType, $size );
 			}
 
 			if ( !$isList && $fieldType == 'Coordinates' ) {
-				$floatTypeString = self::fieldTypeToSQLType( 'Float', $wgDBtype );
+				$floatTypeString = self::fieldTypeToSQLType( 'Float', $dbType );
 				$createSQL .= ', ' . $fieldName . '__lat ';
 				$createSQL .= $floatTypeString;
 				$createSQL .= ', ' . $fieldName . '__lon ';
 				$createSQL .= $floatTypeString;
 			} elseif ( $fieldType == 'Date' || $fieldType == 'Datetime' ) {
-				$integerTypeString = self::fieldTypeToSQLType( 'Integer', $wgDBtype );
+				$integerTypeString = self::fieldTypeToSQLType( 'Integer', $dbType );
 				$createSQL .= ', ' . $fieldName . '__precision ';
 				$createSQL .= $integerTypeString;
 			}
@@ -335,12 +427,12 @@ class CargoUtils {
 				$cdb->tableName( $fieldTableName ) . ' ( ' .
 				"_rowID $intTypeString, ";
 			if ( $fieldType == 'Coordinates' ) {
-				$floatTypeString = self::fieldTypeToSQLType( 'Float', $wgDBtype );
+				$floatTypeString = self::fieldTypeToSQLType( 'Float', $dbType );
 				$createSQL .= '_value ' . $floatTypeString . ', ';
 				$createSQL .= '_lat ' . $floatTypeString . ', ';
 				$createSQL .= '_lon ' . $floatTypeString;
 			} else {
-				$createSQL .= '_value ' . self::fieldTypeToSQLType( $fieldType, $wgDBtype, $size );
+				$createSQL .= '_value ' . self::fieldTypeToSQLType( $fieldType, $dbType, $size );
 			}
 			$createSQL .= ' )';
 			$cdb->query( $createSQL );
@@ -349,6 +441,9 @@ class CargoUtils {
 			$cdb->query( $createIndexSQL );
 			$fieldTableNames[] = $tableName . '__' . $fieldName;
 		}
+
+		// Necessary in some cases.
+		$cdb->close();
 
 		// Finally, store all the info in the cargo_tables table.
 		$dbr->insert( 'cargo_tables',
