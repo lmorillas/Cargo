@@ -8,7 +8,7 @@
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns', 'facets', 'start', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
+        return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns', 'facets', 'start', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
     }
 
     static function fieldWithEq( $f ){
@@ -91,6 +91,9 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
         if ( array_key_exists( "start", $this->displayParams ) ) {
             $attrs["data-ex-start"] = $this->concatenate_dot($this->displayParams['start']);
+        }
+        if ( array_key_exists( "end", $this->displayParams ) ) {
+            $attrs["data-ex-end"] = $this->concatenate_dot($this->displayParams['end']);
         }
         if ( array_key_exists( "color", $this->displayParams ) ) {
             $attrs["data-ex-color-key"] = $this->concatenate_dot($this->displayParams['color']);
@@ -198,6 +201,8 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // resulting output
         $text = "";
 
+        $this->hasCoordinates( $sqlQueries );
+
         // Add necessary JS scripts.
         //  Exhibit Scripts
         $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js"></script>';
@@ -235,40 +240,94 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
 
         // View
+        $this->views = array();
 
         if ( array_key_exists( 'view', $displayParams) ){
-            $views = array_map( 'ucfirst', explode(',', $displayParams['view']));
+            $this->views = array_map( 'ucfirst', explode(',', $displayParams['view']));
+        }
+        else {  // default views
+            $this->automateViews($sqlQueries);
+        }
 
-            $text_views = '';
+        $text_views = '';
 
-            foreach($views as $view){
-                switch ( $view ) {
-                    case "Timeline":
-                        $text_views = $text_views . $this->createTimeline();
-                        break;
-                    case "Map":
-                        $text_views = $text_views . $this->createMap();
-                        break;
-                    case "Tabular":
-                        $fields = $queryParams['fields'];
-                        $text_views = $text_views . $this->createTabular($fields);
-                    }
+        foreach($this->views as $view){
+            switch ( $view ) {
+                case "Timeline":
+                    $text_views = $text_views . $this->createTimeline();
+                    break;
+                case "Map":
+                    $text_views = $text_views . $this->createMap();
+                    break;
+                case "Tabular":
+                    $fields = $queryParams['fields'];
+                    $text_views = $text_views . $this->createTabular($fields);
                 }
-            if ( count($views) > 1 ){
-                $text = $text . Html::rawElement( 'div',
-                    array('data-ex-role'=>"viewPanel"),
-                    $text_views);
             }
-            else{
-                $text = $text . $text_views;
-            }
+
+        if ( count($this->views) > 1 ){
+            $text = $text . Html::rawElement( 'div',
+                array('data-ex-role'=>"viewPanel"),
+                $text_views);
         }
         else {
-            $text = $text . $this->createDefaultView();
+            $text = $text . $text_views;
         }
+
         // add generic lens
         $text = $text . $this->createLens();
 
         return $text;
     }
+
+    function automateViews( $sqlQueries ){
+        $tmp = $this->hasCoordinates( $sqlQueries );
+        if ( count($tmp) > 0 ){
+            $this->displayParams['latlng'] = $tmp[0];
+            $this->views[] = 'Map';
+        }
+        $tmp = $this->hasDate( $sqlQueries );
+        if ( count($tmp) > 0 ){
+            $this->views[] = 'Timeline';
+            $this->displayParams['start'] = $tmp[0];
+            /*  think on it before
+            if (count($tmp) > 1) {
+                $this->displayParams['end'] = $tmp[0];
+            }
+            */
+        }
+        if (count($this->views) == 0)
+            $this->views[] = 'Tabular';  // default view?
+    }
+
+    function hasCoordinates( $sqlQueries ){
+        $coordinatesFields = array();
+
+        foreach ( $sqlQueries as $query){
+            $fieldDescriptions = $query->mFieldDescriptions;
+            // print_r( $fieldDescriptions );
+            foreach ( $fieldDescriptions as $field => $description ) {
+                if ( $description->mType == 'Coordinates' ) {
+                    $coordinatesFields[] = $field;
+                }
+            }
+        }
+        return $coordinatesFields;
+    }
+
+    function hasDate($sqlQueries){
+        $dateFields = array();
+
+        foreach ( $sqlQueries as $query){
+            $fieldDescriptions = $query->mFieldDescriptions;
+            foreach ( $fieldDescriptions as $field => $description ) {
+                if ( $description->mType == 'Date' || $description->mType == 'Datetime' ) {
+                    $dateFields[] = $field;
+                }
+            }
+        }
+        return $dateFields;
+    }
+
+
 }
