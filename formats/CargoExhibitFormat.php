@@ -55,9 +55,9 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     }
 
 
-    function sortKey(){
+    function sortKey($attrs){
         if ( array_key_exists( 'sort', $this->displayParams ) ) {
-             $this->attrs['data-ex-orders'] = to_ex_param($this->displayParams['sort']);
+             $attrs['data-ex-orders'] = to_ex_param($this->displayParams['sort']);
          }
     }
 
@@ -67,7 +67,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     */
     function checkParam($param, $attr){
         if ( array_key_exists( $param, $this->displayParams ) ) {
-             $this->attrs['data-ex-' . $attr] = to_ex_param($this->displayParams[$param]);
+             $attrs['data-ex-' . $attr] = to_ex_param($this->displayParams[$param]);
          }
 
     }
@@ -77,51 +77,58 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $this->mOutput->addHeadItem( $maps_script, $maps_script );
 
          // div
-        $this->attrs["data-ex-view-class"] = "Map";
+        $attrs = array();
+        $attrs['data-ex-role'] = 'view';
+        $attrs["data-ex-view-class"] = "Map";
 
         if ( array_key_exists( "latlng", $this->displayParams ) ) {
-            $this->attrs["data-ex-latlng"] = concatenate_dot($this->displayParams['latlng']);
+            $attrs["data-ex-latlng"] = concatenate_dot($this->displayParams['latlng']);
         }
         if ( array_key_exists( "color", $this->displayParams ) ) {
-            $this->attrs["data-ex-color-key"] = concatenate_dot($this->displayParams['color']);
+            $attrs["data-ex-color-key"] = concatenate_dot($this->displayParams['color']);
         }
         if ( array_key_exists( "center", $this->displayParams ) ) {
-            $this->attrs["data-ex-center"] = $this->displayParams['center'];
+            $attrs["data-ex-center"] = $this->displayParams['center'];
         }
         if ( array_key_exists( "zoom", $this->displayParams ) ) {
-            $this->attrs["data-ex-zoom"] = $this->displayParams['zoom'];
+            $attrs["data-ex-zoom"] = $this->displayParams['zoom'];
         }
+        return Html::rawElement( 'div', $attrs );
     }
 
-    function createTimeline($displayParams){
+    function createTimeline(){
         // timeline script
         $timeline_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/time/time-extension.js"/>';
         $this->mOutput->addHeadItem( $timeline_script, $timeline_script );
 
         // div
-        $this->attrs["data-ex-view-class"] = "Timeline";
+        $attrs = array();
+        $attrs['data-ex-role'] = 'view';
+        $attrs["data-ex-view-class"] = "Timeline";
 
         if ( array_key_exists( "start", $this->displayParams ) ) {
-            $this->attrs["data-ex-start"] = concatenate_dot($this->displayParams['start']);
+            $attrs["data-ex-start"] = concatenate_dot($this->displayParams['start']);
         }
         if ( array_key_exists( "color", $this->displayParams ) ) {
-            $this->attrs["data-ex-color-key"] = concatenate_dot($this->displayParams['color']);
+            $attrs["data-ex-color-key"] = concatenate_dot($this->displayParams['color']);
         }
         if ( array_key_exists( "topunit", $this->displayParams ) ) {
-            $this->attrs["data-ex-top-band-unit"] = $this->displayParams['topunit'];
+            $attrs["data-ex-top-band-unit"] = $this->displayParams['topunit'];
         }
         if ( array_key_exists( "toppx", $this->displayParams ) ) {
-            $this->attrs["data-ex-top-band-pixels-per-unit"] = $this->displayParams['toppx'];
+            $attrs["data-ex-top-band-pixels-per-unit"] = $this->displayParams['toppx'];
         }
         if ( array_key_exists( "bottompx", $this->displayParams ) ) {
-            $this->attrs["data-ex-bottom-band-pixels-per-unit"] = $this->displayParams['bottompx'];
+            $attrs["data-ex-bottom-band-pixels-per-unit"] = $this->displayParams['bottompx'];
         }
+        return Html::rawElement( 'div', $attrs );
     }
 
     function createDefaultView () {
-        $this->attrs = array();
-        $this->attrs['data-ex-role'] = 'view';
-        $this->sortKey();
+        $attrs = array();
+        $attrs['data-ex-role'] = 'view';
+        $this->sortKey($attrs);
+        return Html::rawElement( 'div', $attrs );
     }
 
     /**
@@ -129,20 +136,24 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     *
     */
     function createTabular($fields){
-        $this->attrs['data-ex-view-class'] = 'Tabular';
-        $this->attrs["data-ex-paginate"] = "true";
+        $attrs = array();
+        $attrs['data-ex-role'] = 'view';
+        $attrs['data-ex-view-class'] = 'Tabular';
+        $attrs["data-ex-paginate"] = "true";
 
         $field_list =  explode( ',' , $fields);
         $field_list = array_map( "fieldWithEq", $field_list);  // fields with =
 
-        $this->attrs["data-ex-columns"] = implode(',', array_map("concatenate_dot", $field_list));
+        $attrs["data-ex-columns"] = implode(',', array_map("concatenate_dot", $field_list));
 
         if ( array_key_exists( "labels", $this->displayParams ) ) {
-            $this->attrs["data-ex-column-labels"] = $this->displayParams['labels'];
+            $attrs["data-ex-column-labels"] = $this->displayParams['labels'];
         }
         else {
-            $this->attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst", $field_list));
+            $attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst", $field_list));
         }
+        //$this->sortKey($attrs);
+        return Html::rawElement( 'div', $attrs );
     }
 
     function createFacets( $facets ){
@@ -234,24 +245,38 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
 
         // View
-        $this->createDefaultView();
+
         if ( array_key_exists( 'view', $displayParams) ){
-             $view = ucfirst( $displayParams['view'] );
-             switch ($view) {
-                case "Timeline":
-                    $this->createTimeline($displayParams);
-                    break;
-                case "Map":
-                    $this->createMap();
-                    break;
-                case "Tabular":
-                    $fields = $queryParams['fields'];
-                    $this->createTabular($fields);
+            $views = array_map( 'ucfirst', explode(',', $displayParams['view']));
+
+            $text_views = '';
+
+            foreach($views as $view){
+                switch ( $view ) {
+                    case "Timeline":
+                        $text_views = $text_views . $this->createTimeline();
+                        break;
+                    case "Map":
+                        $text_views = $text_views . $this->createMap();
+                        break;
+                    case "Tabular":
+                        $fields = $queryParams['fields'];
+                        $text_views = $text_views . $this->createTabular($fields);
+                    }
+                }
+            if ( count($views) > 1 ){
+                $text = $text . Html::rawElement( 'div',
+                    array('data-ex-role'=>"viewPanel"),
+                    $text_views);
+            }
+            else{
+                $text = $text . $text_views;
             }
         }
-        // test others
-
-        $text = $text .  Html::rawElement( 'div', $this->attrs );
+        else {
+            $text = $text . $this->createDefaultView();
+        }
+        // add generic lens
         $text = $text . $this->createLens();
 
         return $text;
