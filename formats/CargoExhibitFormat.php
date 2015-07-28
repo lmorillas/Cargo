@@ -158,7 +158,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
     function createFacets( $facets ){
     // explode facets and create the div for each of them
-        $facets = explode( ',' , $facets);
         $text = '';
         foreach ($facets as $f) {
              $attrs = array(
@@ -240,8 +239,15 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // Facets
         if ( array_key_exists( 'facets', $displayParams ) ) {
             $facets = $displayParams['facets'];
+            $facets = array_map('trim', explode( ',' , $facets));
             $text = $text .  $this->createFacets( $facets );
             }
+        else{
+            $fields = $queryParams['fields'];
+            $field_list =  explode( ',' , $fields);
+            $field_list = array_map( "fieldWithEq", $field_list);  // fields with =
+            $text = $text .  $this->createFacets( array_slice($field_list, 0, 3));
+        }
 
 
         // View
