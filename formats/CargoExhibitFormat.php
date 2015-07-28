@@ -4,49 +4,6 @@
  */
 
 
-function fieldWithEq( $f ){
-        $containsEquals = strpos( $f, '=' );
-        if ( $containsEquals ){
-            return  explode("=", $f)[1];
-        }
-        else{
-            return $f;
-        }
-    }
-
-    /**
-     * @param string $p
-     * @return string
-     **/
-function concatenate_dot ($p) { return '.' . trim($p); }
-
-    /**
-     * @param array $param_list
-     * @return array
-     **/
-function to_ex_param( $param_list ) {
-    $params = explode( ',' , $param_list);
-
-    return implode(',', array_map("concatenate_dot", $params ) );
-}
-
-
-function returnValue ( $keyVal ){
-    $_kv = explode("=", $keyVal);
-    return $_kv[count($_kv) - 1];
-}
-
-function fieldsForExhibit( $fields ){
-    $containsEquals = strpos( $fields, '=' );
-    if ( $containsEquals ){
-        return implode(',', array_map( "returnValue", explode( ',', $fields )));
-    }
-    else{
-        return $fields;
-    }
-
-}
-
 
 class CargoExhibitFormat extends CargoDeferredFormat {
 
@@ -54,10 +11,36 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns', 'facets', 'start', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
     }
 
+    static function fieldWithEq( $f ){
+            $containsEquals = strpos( $f, '=' );
+            if ( $containsEquals ){
+                return  explode("=", $f)[1];
+            }
+            else{
+                return $f;
+            }
+        }
+
+    /**
+     * @param string $p
+     * @return string
+     **/
+    function concatenate_dot ($p) { return '.' . trim($p); }
+
+    /**
+     * @param array $param_list
+     * @return array
+     **/
+    function to_ex_param( $param_list ) {
+        $params = explode( ',' , $param_list);
+
+        return implode(',', array_map("CargoExhibitFormat::concatenate_dot", $params ) );
+    }
+
 
     function sortKey($attrs){
         if ( array_key_exists( 'sort', $this->displayParams ) ) {
-             $attrs['data-ex-orders'] = to_ex_param($this->displayParams['sort']);
+             $attrs['data-ex-orders'] = $this->to_ex_param($this->displayParams['sort']);
          }
     }
 
@@ -67,7 +50,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     */
     function checkParam($param, $attr){
         if ( array_key_exists( $param, $this->displayParams ) ) {
-             $attrs['data-ex-' . $attr] = to_ex_param($this->displayParams[$param]);
+             $attrs['data-ex-' . $attr] = $this->to_ex_param($this->displayParams[$param]);
          }
 
     }
@@ -82,10 +65,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $attrs["data-ex-view-class"] = "Map";
 
         if ( array_key_exists( "latlng", $this->displayParams ) ) {
-            $attrs["data-ex-latlng"] = concatenate_dot($this->displayParams['latlng']);
+            $attrs["data-ex-latlng"] = $this->concatenate_dot($this->displayParams['latlng']);
         }
         if ( array_key_exists( "color", $this->displayParams ) ) {
-            $attrs["data-ex-color-key"] = concatenate_dot($this->displayParams['color']);
+            $attrs["data-ex-color-key"] = $this->concatenate_dot($this->displayParams['color']);
         }
         if ( array_key_exists( "center", $this->displayParams ) ) {
             $attrs["data-ex-center"] = $this->displayParams['center'];
@@ -107,10 +90,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $attrs["data-ex-view-class"] = "Timeline";
 
         if ( array_key_exists( "start", $this->displayParams ) ) {
-            $attrs["data-ex-start"] = concatenate_dot($this->displayParams['start']);
+            $attrs["data-ex-start"] = $this->concatenate_dot($this->displayParams['start']);
         }
         if ( array_key_exists( "color", $this->displayParams ) ) {
-            $attrs["data-ex-color-key"] = concatenate_dot($this->displayParams['color']);
+            $attrs["data-ex-color-key"] = $this->concatenate_dot($this->displayParams['color']);
         }
         if ( array_key_exists( "topunit", $this->displayParams ) ) {
             $attrs["data-ex-top-band-unit"] = $this->displayParams['topunit'];
@@ -142,9 +125,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $attrs["data-ex-paginate"] = "true";
 
         $field_list =  explode( ',' , $fields);
-        $field_list = array_map( "fieldWithEq", $field_list);  // fields with =
+        $field_list = array_map( "CargoExhibitFormat::fieldWithEq", $field_list);  // fields with =
 
-        $attrs["data-ex-columns"] = implode(',', array_map("concatenate_dot", $field_list));
+        $attrs["data-ex-columns"] = implode(',',
+            array_map("CargoExhibitFormat::concatenate_dot", $field_list));
 
         if ( array_key_exists( "labels", $this->displayParams ) ) {
             $attrs["data-ex-column-labels"] = $this->displayParams['labels'];
@@ -189,7 +173,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
     function createLens () {
         if ( array_key_exists( 'lens', $this->displayParams ) ) {
-                $lens = to_ex_param( $this->displayParams['lens'] );
+                $lens = $this->to_ex_param( $this->displayParams['lens'] );
                 // Add on "px", if no unit is defined.
                  $attrs = array(
                     'data-ex-role' => "lens",
@@ -245,7 +229,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         else{
             $fields = $queryParams['fields'];
             $field_list =  explode( ',' , $fields);
-            $field_list = array_map( "fieldWithEq", $field_list);  // fields with =
+            $field_list = array_map( "CargoExhibitFormat::fieldWithEq", $field_list);  // fields with =
             $text = $text .  $this->createFacets( array_slice($field_list, 0, 3));
         }
 
