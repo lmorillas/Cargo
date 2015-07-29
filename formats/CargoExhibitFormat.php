@@ -73,6 +73,9 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         if ( array_key_exists( "center", $this->displayParams ) ) {
             $attrs["data-ex-center"] = $this->displayParams['center'];
         }
+        else {
+            $attrs["data-ex-autoposition"] = "true";
+        }
         if ( array_key_exists( "zoom", $this->displayParams ) ) {
             $attrs["data-ex-zoom"] = $this->displayParams['zoom'];
         }
