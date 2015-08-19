@@ -147,7 +147,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
                 'data-ex-show-missing' => 'false',
                 'data-ex-facet-label' => ucfirst($f)
                 );
-        $text = $text . Html::element( 'div', $attrs);
+        $text .=  Html::element( 'div', $attrs);
         }
         return Html::rawElement( 'div', array("class" => "facets"), $text);
     }
@@ -215,7 +215,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $this->displayParams = $displayParams;
 
         // Search
-        $text = $text . $this->createSearch("Search");
+        $text .=  $this->createSearch("Search");
 
         // Facets
         $field_list = array();
@@ -228,10 +228,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         if ( array_key_exists( 'facets', $displayParams ) ) {
             $facets = $displayParams['facets'];
             $facets = array_map('trim', explode( ',' , $facets));
-            $text = $text .  $this->createFacets( $facets );
+            $text .= $this->createFacets( $facets );
             }
         else{
-            $text = $text .  $this->createFacets( array_slice($field_list, 0, 3));
+            $text .= $this->createFacets( array_slice($field_list, 0, 3));
         }
 
 
@@ -261,16 +261,16 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             }
 
         if ( count($this->views) > 1 ){
-            $text = $text . Html::rawElement( 'div',
+            $text .=  Html::rawElement( 'div',
                 array('data-ex-role'=>"viewPanel"),
                 $text_views);
         }
         else {
-            $text = $text . $text_views;
+            $text .=  $text_views;
         }
 
         // add generic lens
-        $text = $text . $this->createLens();
+        $text .=  $this->createLens();
 
         return $text;
     }
