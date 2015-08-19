@@ -236,9 +236,12 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $text = $text .  $this->createFacets( $facets );
             }
         else{
-            $fields = $queryParams['fields'];
-            $field_list =  explode( ',' , $fields);
-            $field_list = array_map( "CargoExhibitFormat::fieldWithEq", $field_list);  // fields with =
+            $field_list = array();
+            foreach ( $sqlQueries as $sqlQuery ) {
+                foreach ( $sqlQuery->mAliasedFieldNames as $alias => $fieldName ) {
+                    $field_list[] = $alias;
+                }
+            }
             $text = $text .  $this->createFacets( array_slice($field_list, 0, 3));
         }
 
