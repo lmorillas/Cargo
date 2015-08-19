@@ -1,6 +1,8 @@
 <?php
 /**
  * @author @lmorillas
+ *
+ * Adds exhibit format to cargo queries
  */
 
 
@@ -44,16 +46,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
          }
     }
 
-    /**
-    * @param string $param
-    * @param string $attr
-    */
-    function checkParam($param, $attr){
-        if ( array_key_exists( $param, $this->displayParams ) ) {
-             $attrs['data-ex-' . $attr] = $this->to_ex_param($this->displayParams[$param]);
-         }
-
-    }
 
     function createMap(){
         $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
