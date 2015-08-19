@@ -157,12 +157,11 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     function createLens () {
         if ( array_key_exists( 'lens', $this->displayParams ) ) {
                 $lens = $this->to_ex_param( $this->displayParams['lens'] );
-                // Add on "px", if no unit is defined.
                  $attrs = array(
                     'data-ex-role' => "lens",
                     'style' => "display: None;"
                     );
-                return Html::rawElement( 'div', $attrs, $lens );
+                return Html::element( 'div', $attrs, $lens );
             }
         return '';
     }
