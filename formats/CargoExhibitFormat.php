@@ -154,6 +154,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return Html::element( 'div', $attrs);
     }
 
+    /**
+    * Study security issues
+    *
+    */
     function createLens () {
         if ( array_key_exists( 'lens', $this->displayParams ) ) {
                 $lens = $this->to_ex_param( $this->displayParams['lens'] );
@@ -161,7 +165,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
                     'data-ex-role' => "lens",
                     'style' => "display: None;"
                     );
-                return Html::element( 'div', $attrs, $lens );
+                return Html::rawElement( 'div', $attrs, $lens );
             }
         return '';
     }
