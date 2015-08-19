@@ -40,7 +40,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     }
 
 
-    function sortKey($attrs){
+    function sortKey(){
         if ( array_key_exists( 'sort', $this->displayParams ) ) {
              $attrs['data-ex-orders'] = $this->to_ex_param($this->displayParams['sort']);
          }
@@ -108,7 +108,12 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     function createDefaultView () {
         $attrs = array();
         $attrs['data-ex-role'] = 'view';
-        $this->sortKey($attrs);
+        $this->sortKey($this->displayParams);
+
+        if ( array_key_exists( 'sort', $this->displayParams ) ) {
+             $attrs['data-ex-orders'] = $this->to_ex_param($this->displayParams['sort']);
+         }
+
         return Html::element( 'div', $attrs );
     }
 
@@ -134,7 +139,11 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         else {
             $attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst", $field_list));
         }
-        //$this->sortKey($attrs);
+
+        if ( array_key_exists( 'sort', $this->displayParams ) ) {
+             $attrs['data-ex-orders'] = $this->to_ex_param($this->displayParams['sort']);
+         }
+
         return Html::element( 'div', $attrs );
     }
 
