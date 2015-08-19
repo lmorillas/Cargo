@@ -96,18 +96,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return Html::element( 'div', $attrs );
     }
 
-    function createDefaultView () {
-        $attrs = array();
-        $attrs['data-ex-role'] = 'view';
-        $this->sortKey($this->displayParams);
-
-        if ( array_key_exists( 'sort', $this->displayParams ) ) {
-             $attrs['data-ex-orders'] = $this->to_ex_param($this->displayParams['sort']);
-         }
-
-        return Html::element( 'div', $attrs );
-    }
-
     /**
     * @param $fields_list array
     *
@@ -217,7 +205,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // Search
         $text .=  $this->createSearch("Search");
 
-        // Facets
         $field_list = array();
         foreach ( $sqlQueries as $sqlQuery ) {
             foreach ( $sqlQuery->mAliasedFieldNames as $alias => $fieldName ) {
@@ -225,6 +212,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             }
         }
 
+        // Facets
         if ( array_key_exists( 'facets', $displayParams ) ) {
             $facets = $displayParams['facets'];
             $facets = array_map('trim', explode( ',' , $facets));
@@ -234,14 +222,13 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $text .= $this->createFacets( array_slice($field_list, 0, 3));
         }
 
-
         // View
         $this->views = array();
 
         if ( array_key_exists( 'view', $displayParams) ){
             $this->views = array_map( 'ucfirst', explode(',', $displayParams['view']));
         }
-        else {  // default views
+        else {  // default views:  $this->views
             $this->automateViews($sqlQueries);
         }
 
@@ -275,12 +262,17 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return $text;
     }
 
+    /**
+    * Initializes $this->views[]
+    */
     function automateViews( $sqlQueries ){
+        // map ?
         $tmp = $this->hasCoordinates( $sqlQueries );
         if ( count($tmp) > 0 ){
             $this->displayParams['latlng'] = $tmp[0];
             $this->views[] = 'Map';
         }
+        // timeline ?
         $tmp = $this->hasDate( $sqlQueries );
         if ( count($tmp) > 0 ){
             $this->views[] = 'Timeline';
