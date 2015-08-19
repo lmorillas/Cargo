@@ -13,15 +13,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns', 'facets', 'start', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
     }
 
-    static function fieldWithEq( $f ){
-            $containsEquals = strpos( $f, '=' );
-            if ( $containsEquals ){
-                return  explode("=", $f)[1];
-            }
-            else{
-                return $f;
-            }
-        }
 
     /**
      * @param string $p
@@ -118,17 +109,14 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     }
 
     /**
-    * @param $fields string
+    * @param $fields_list array
     *
     */
-    function createTabular($fields){
+    function createTabular($field_list){
         $attrs = array();
         $attrs['data-ex-role'] = 'view';
         $attrs['data-ex-view-class'] = 'Tabular';
         $attrs["data-ex-paginate"] = "true";
-
-        $field_list =  explode( ',' , $fields);
-        $field_list = array_map( "CargoExhibitFormat::fieldWithEq", $field_list);  // fields with =
 
         $attrs["data-ex-columns"] = implode(',',
             array_map("CargoExhibitFormat::concatenate_dot", $field_list));
@@ -230,18 +218,19 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $text = $text . $this->createSearch("Search");
 
         // Facets
+        $field_list = array();
+        foreach ( $sqlQueries as $sqlQuery ) {
+            foreach ( $sqlQuery->mAliasedFieldNames as $alias => $fieldName ) {
+                $field_list[] = $alias;
+            }
+        }
+
         if ( array_key_exists( 'facets', $displayParams ) ) {
             $facets = $displayParams['facets'];
             $facets = array_map('trim', explode( ',' , $facets));
             $text = $text .  $this->createFacets( $facets );
             }
         else{
-            $field_list = array();
-            foreach ( $sqlQueries as $sqlQuery ) {
-                foreach ( $sqlQuery->mAliasedFieldNames as $alias => $fieldName ) {
-                    $field_list[] = $alias;
-                }
-            }
             $text = $text .  $this->createFacets( array_slice($field_list, 0, 3));
         }
 
@@ -267,8 +256,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
                     $text_views = $text_views . $this->createMap();
                     break;
                 case "Tabular":
-                    $fields = $queryParams['fields'];
-                    $text_views = $text_views . $this->createTabular($fields);
+                    $text_views = $text_views . $this->createTabular($field_list);
                 }
             }
 
