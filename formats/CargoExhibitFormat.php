@@ -71,7 +71,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         if ( array_key_exists( "zoom", $this->displayParams ) ) {
             $attrs["data-ex-zoom"] = $this->displayParams['zoom'];
         }
-        return Html::rawElement( 'div', $attrs );
+        return Html::element( 'div', $attrs );
     }
 
     function createTimeline(){
@@ -102,14 +102,14 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         if ( array_key_exists( "bottompx", $this->displayParams ) ) {
             $attrs["data-ex-bottom-band-pixels-per-unit"] = $this->displayParams['bottompx'];
         }
-        return Html::rawElement( 'div', $attrs );
+        return Html::element( 'div', $attrs );
     }
 
     function createDefaultView () {
         $attrs = array();
         $attrs['data-ex-role'] = 'view';
         $this->sortKey($attrs);
-        return Html::rawElement( 'div', $attrs );
+        return Html::element( 'div', $attrs );
     }
 
     /**
@@ -135,7 +135,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst", $field_list));
         }
         //$this->sortKey($attrs);
-        return Html::rawElement( 'div', $attrs );
+        return Html::element( 'div', $attrs );
     }
 
     function createFacets( $facets ){
@@ -150,7 +150,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
                 'data-ex-show-missing' => 'false',
                 'data-ex-facet-label' => ucfirst($f)
                 );
-        $text = $text . Html::rawElement( 'div', $attrs);
+        $text = $text . Html::element( 'div', $attrs);
         }
         return Html::rawElement( 'div', array("class" => "facets"), $text);
     }
@@ -166,7 +166,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             'data-ex-facet-class' => "TextSearch",
             'data-ex-facet-label' => $title
             );
-        return Html::rawElement( 'div', $attrs);
+        return Html::element( 'div', $attrs);
     }
 
     function createLens () {
