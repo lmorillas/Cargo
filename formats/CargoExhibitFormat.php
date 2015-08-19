@@ -10,7 +10,7 @@
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'height', 'width', 'zoom', 'lens','sort', 'view', 'columns', 'facets', 'start', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
+        return array( 'height', 'width', 'zoom', 'sort', 'view', 'columns', 'facets', 'start', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
     }
 
 
@@ -154,21 +154,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return Html::element( 'div', $attrs);
     }
 
-    /**
-    * Study security issues
-    *
-    */
-    function createLens () {
-        if ( array_key_exists( 'lens', $this->displayParams ) ) {
-                $lens = $this->to_ex_param( $this->displayParams['lens'] );
-                 $attrs = array(
-                    'data-ex-role' => "lens",
-                    'style' => "display: None;"
-                    );
-                return Html::rawElement( 'div', $attrs, $lens );
-            }
-        return '';
-    }
 
     /**
      *
@@ -258,9 +243,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         else {
             $text .=  $text_views;
         }
-
-        // add generic lens
-        $text .=  $this->createLens();
 
         return $text;
     }
