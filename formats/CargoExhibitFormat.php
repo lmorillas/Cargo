@@ -173,7 +173,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
         // Add necessary JS scripts.
         //  Exhibit Scripts
-        $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js"></script>';
+        $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js?autoCreate=false"></script>';
         $this->mOutput->addHeadItem( $ex_script, $ex_script );
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
