@@ -300,6 +300,4 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         }
         return $dateFields;
     }
-
-
 }
