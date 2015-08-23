@@ -6,7 +6,6 @@
  */
 
 
-
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
@@ -166,14 +165,17 @@ class CargoExhibitFormat extends CargoDeferredFormat {
      */
     function queryAndDisplay( $sqlQueries, $displayParams, $querySpecificParams = null ) {
 
+        $this->mOutput->addModules( 'ext.cargo.exhibit' );
+
         // resulting output
         $text = "";
 
+        // check coordinates
         $this->hasCoordinates( $sqlQueries );
 
         // Add necessary JS scripts.
         //  Exhibit Scripts
-        $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js"></script>';
+        $ex_script = '<script src="http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js?autoCreate=false"></script>';
         $this->mOutput->addHeadItem( $ex_script, $ex_script );
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
@@ -187,6 +189,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // Data imported as csv
         $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" />";
         $this->mOutput->addHeadItem($datalink, $datalink);
+
 
         $this->displayParams = $displayParams;
 
