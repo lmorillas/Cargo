@@ -235,6 +235,13 @@ $wgResourceModules += array(
 		'localBasePath' => __DIR__,
 		'remoteExtPath' => 'Cargo'
 	),
+    'ext.cargo.exhibit' => array(
+        'scripts' => array(
+            'libs/ext.cargo.exhibit.js'
+        ),
+        'localBasePath' => __DIR__,
+        'remoteExtPath' => 'Cargo'
+    ),
 );
 
 function cargoRegisterParserFunctions( &$parser ) {
