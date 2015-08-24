@@ -170,31 +170,12 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // resulting output
         $text = "";
 
-        // check coordinates
-        $this->hasCoordinates( $sqlQueries );
-
         // Add necessary JS scripts.
         //  Exhibit Scripts
         $ex_script = '<script src="http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js?autoCreate=false"></script>';
         $this->mOutput->addHeadItem( $ex_script, $ex_script );
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
-        $queryParams = $this->sqlQueriesToQueryParams( $sqlQueries );
-
-        // format csv
-        $queryParams['format'] = 'csv';
-        $queryParams['limit'] = '1000';
-        $dataurl = $ce->getFullURL( $queryParams );
-
-        // Data imported as csv
-        $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" />";
-        $this->mOutput->addHeadItem($datalink, $datalink);
-
-
-        $this->displayParams = $displayParams;
-
-        // Search
-        $text .=  $this->createSearch("Search");
 
         $field_list = array();
         foreach ( $sqlQueries as $sqlQuery ) {
@@ -202,6 +183,39 @@ class CargoExhibitFormat extends CargoDeferredFormat {
                 $field_list[] = $alias;
             }
         }
+
+        $csv_properties = '';
+        if ( ! in_array( "label", $field_list ) ){
+            // array copy
+            $_field_list = $field_list;
+            // first field will be label!
+            $_field_list[0] = 'label';
+            $csv_properties = 'data-ex-properties="' . implode( ',', $_field_list) . '"';
+        }
+
+        $queryParams = $this->sqlQueriesToQueryParams( $sqlQueries );
+
+        // format csv
+        $queryParams['format'] = 'csv';
+        $queryParams['limit'] = '1000';
+
+        $dataurl = $ce->getFullURL( $queryParams );
+
+        // Data imported as csv
+        $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" $csv_properties />";
+        /*
+        $data_ex_prop = "label,username,role,latlng,hour,url,gender,time";
+
+        $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" data-ex-properties=\"$data_ex_prop\" />";
+        */
+
+        $this->mOutput->addHeadItem($datalink, $datalink);
+
+
+        $this->displayParams = $displayParams;
+
+        // Search
+        $text .=  $this->createSearch("Search");
 
         // Facets
         if ( array_key_exists( 'facets', $displayParams ) ) {
