@@ -153,6 +153,20 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return Html::element( 'div', $attrs);
     }
 
+    function createLense ($_field_list) {
+        $lens = '<table data-ex-role="lens" class="cargoTable" style="display: none;">';
+        $lens .= '<caption><strong data-ex-content=".label"></strong></caption>';
+        foreach( $_field_list as $field) {
+            if ($field != "label" and strpos( $field, '__' ) === false and
+               strpos( $field, '  ' ) === false) {
+               $th = "<strong>" . ucfirst( $field ) . "</strong>";
+               $lens .= "<tr data-ex-if-exists=\".$field\"><td>$th</td><td data-ex-content=\".$field\"></td></tr>";
+            }
+        }
+        $lens .= '</table>';
+        return $lens;
+    }
+
     /**
      *
      * @param array $valuesTable
@@ -165,6 +179,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     function queryAndDisplay( $sqlQueries, $displayParams, $querySpecificParams = null ) {
 
         $this->mOutput->addModules( 'ext.cargo.exhibit' );
+        $this->mOutput->addModuleStyles( 'ext.cargo.main' );
 
         // resulting output
         $text = "";
@@ -183,10 +198,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             }
         }
 
+        // array copy
+        $_field_list = $field_list;
         $csv_properties = '';
-        if ( ! in_array( "label", $field_list ) ){
-            // array copy
-            $_field_list = $field_list;
+        if ( ! in_array( "label", $_field_list ) ){
             // first field will be label!
             $_field_list[0] = 'label';
             $csv_properties = 'data-ex-properties="' . implode( ',', $_field_list) . '"';
@@ -206,8 +221,12 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
         $this->displayParams = $displayParams;
 
+
         // Search
         $text .=  $this->createSearch("Search");
+
+        // lense
+        $text .= $this->createLense($_field_list);
 
         // Facets
         if ( array_key_exists( 'facets', $displayParams ) ) {
@@ -286,7 +305,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
         foreach ( $sqlQueries as $query){
             $fieldDescriptions = $query->mFieldDescriptions;
-            // print_r( $fieldDescriptions );
             foreach ( $fieldDescriptions as $field => $description ) {
                 if ( $description->mType == 'Coordinates' ) {
                     $coordinatesFields[] = $field;
