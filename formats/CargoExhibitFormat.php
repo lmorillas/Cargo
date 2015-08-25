@@ -153,7 +153,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         return Html::element( 'div', $attrs);
     }
 
-
     /**
      *
      * @param array $valuesTable
@@ -203,14 +202,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
         // Data imported as csv
         $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" $csv_properties />";
-        /*
-        $data_ex_prop = "label,username,role,latlng,hour,url,gender,time";
-
-        $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" data-ex-properties=\"$data_ex_prop\" />";
-        */
-
         $this->mOutput->addHeadItem($datalink, $datalink);
-
 
         $this->displayParams = $displayParams;
 
