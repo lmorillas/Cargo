@@ -16,125 +16,6 @@ class CargoStore {
 	const YEAR_ONLY = 3;
 
 	/**
-	 * Parses one half of a set of coordinates into a number.
-	 *
-	 * Copied from Miga, also written by Yaron Koren
-	 * (https://github.com/yaronkoren/miga/blob/master/MDVCoordinates.js)
-	 * - though that one is in Javascript.
-	 */
-	public static function coordinatePartToNumber( $coordinateStr ) {
-		$degreesSymbols = array( "\x{00B0}", "d" );
-		$minutesSymbols = array( "'", "\x{2032}", "\x{00B4}" );
-		$secondsSymbols = array( '"', "\x{2033}", "\x{00B4}\x{00B4}" );
-
-		$numDegrees = null;
-		$numMinutes = null;
-		$numSeconds = null;
-
-		foreach ( $degreesSymbols as $degreesSymbol ) {
-			$pattern = '/([\d\.]+)' . $degreesSymbol . '/u';
-			if ( preg_match( $pattern, $coordinateStr, $matches ) ) {
-				$numDegrees = floatval( $matches[1] );
-				break;
-			}
-		}
-		if ( $numDegrees == null ) {
-			throw new MWException( "Error: could not parse degrees in \"$coordinateStr\"." );
-		}
-
-		foreach ( $minutesSymbols as $minutesSymbol ) {
-			$pattern = '/([\d\.]+)' . $minutesSymbol . '/u';
-			if ( preg_match( $pattern, $coordinateStr, $matches ) ) {
-				$numMinutes = floatval( $matches[1] );
-				break;
-			}
-		}
-		if ( $numMinutes == null ) {
-			// This might not be an error - the number of minutes
-			// might just not have been set.
-			$numMinutes = 0;
-		}
-
-		foreach ( $secondsSymbols as $secondsSymbol ) {
-			$pattern = '/(\d+)' . $secondsSymbol . '/u';
-			if ( preg_match( $pattern, $coordinateStr, $matches ) ) {
-				$numSeconds = floatval( $matches[1] );
-				break;
-			}
-		}
-		if ( $numSeconds == null ) {
-			// This might not be an error - the number of seconds
-			// might just not have been set.
-			$numSeconds = 0;
-		}
-
-		return ( $numDegrees + ( $numMinutes / 60 ) + ( $numSeconds / 3600 ) );
-	}
-
-	/**
-	 * Parses a coordinate string in (hopefully) any standard format.
-	 *
-	 * Copied from Miga, also written by Yaron Koren
-	 * (https://github.com/yaronkoren/miga/blob/master/MDVCoordinates.js)
-	 * - though that one is in Javascript.
-	 */
-	public static function parseCoordinatesString( $coordinatesString ) {
-		$coordinatesString = trim( $coordinatesString );
-		if ( $coordinatesString == null ) {
-			return;
-		}
-
-		// This is safe to do, right?
-		$coordinatesString = str_replace( array( '[', ']' ), '', $coordinatesString );
-		// See if they're separated by commas.
-		if ( strpos( $coordinatesString, ',' ) > 0 ) {
-			$latAndLonStrings = explode( ',', $coordinatesString );
-		} else {
-			// If there are no commas, the first half, for the
-			// latitude, should end with either 'N' or 'S', so do a
-			// little hack to split up the two halves.
-			$coordinatesString = str_replace( array( 'N', 'S' ), array( 'N,', 'S,' ), $coordinatesString );
-			$latAndLonStrings = explode( ',', $coordinatesString );
-		}
-
-		if ( count( $latAndLonStrings ) != 2 ) {
-			throw new MWException( "Error parsing coordinates string: \"$coordinatesString\"." );
-		}
-		list( $latString, $lonString ) = $latAndLonStrings;
-
-		// Handle strings one at a time.
-		$latIsNegative = false;
-		if ( strpos( $latString, 'S' ) > 0 ) {
-			$latIsNegative = true;
-		}
-		$latString = str_replace( array( 'N', 'S' ), '', $latString );
-		if ( is_numeric( $latString ) ) {
-			$latNum = floatval( $latString );
-		} else {
-			$latNum = self::coordinatePartToNumber( $latString );
-		}
-		if ( $latIsNegative ) {
-			$latNum *= -1;
-		}
-
-		$lonIsNegative = false;
-		if ( strpos( $lonString, 'W' ) > 0 ) {
-			$lonIsNegative = true;
-		}
-		$lonString = str_replace( array( 'E', 'W' ), '', $lonString );
-		if ( is_numeric( $lonString ) ) {
-			$lonNum = floatval( $lonString );
-		} else {
-			$lonNum = self::coordinatePartToNumber( $lonString );
-		}
-		if ( $lonIsNegative ) {
-			$lonNum *= -1;
-		}
-
-		return array( $latNum, $lonNum );
-	}
-
-	/**
 	 * Handles the #cargo_set parser function - saves data for one
 	 * template call.
 	 *
@@ -267,84 +148,82 @@ class CargoStore {
 			}
 			if ( $fieldType == 'Date' || $fieldType == 'Datetime' ) {
 				$precision = null;
-				if ( $curValue != '' ) {
-					// Special handling if it's just a year.
-					// If it's a number and less than 8
-					// digits, assume it's a year (hey, it
-					// could be a very large BC year). If
-					// it's 8 digits, it's probably a full
-					// date in the form YYYYMMDD.
-					if ( ctype_digit( $curValue ) && strlen( $curValue ) < 8 ) {
-						// Add a fake date - it will
-						// get ignored later.
-						$curValue = "$curValue-01-01";
-						$precision = self::YEAR_ONLY;
-					} else {
-						// Determine if there's a month
-						// but no day. There's no ideal
-						// way to do this, so: we'll
-						// just look for the total
-						// number of spaces, slashes
-						// and dashes, and if there's
-						// exactly one altogether, we'll
-						// guess that it's a month only.
-						$numSpecialChars = substr_count( $curValue, ' ' ) +
-							substr_count( $curValue, '/' ) + substr_count( $curValue, '-' );
-						if ( $numSpecialChars == 1 ) {
-							// No need to add
-							// anything - PHP will
-							// set it to the 1st
-							// of the month.
-							$precision = self::MONTH_ONLY;
-						} else {
-							// We have at least a
-							// full date.
-							if ( $fieldType == 'Date' ) {
-								$precision = self::DATE_ONLY;
-							}
-						}
-					}
-					$seconds = strtotime( $curValue );
-					if ( $precision == self::DATE_ONLY ) {
-						// Put into YYYY-MM-DD format.
-						$tableFieldValues[$fieldName] = date( 'Y-m-d', $seconds );
-					} else {
-						// It's a Datetime field, which
-						// may or may not have a time -
-						// check for that now.
-						$datePortion = date( 'Y-m-d', $seconds );
-						$timePortion = date( 'G:i:s', $seconds );
-						// If it's not right at midnight,
-						// there's definitely a time there.
-						$precision = self::DATE_AND_TIME;
-						if ( $timePortion !== '0:00:00' ) {
-							$tableFieldValues[$fieldName] = $datePortion . ' ' . $timePortion;
-						} else {
-							// It's midnight, so
-							// chances are good that
-							// there was no time
-							// specified, but how
-							// do we know for sure?
-							// Slight @HACK - look
-							// for either "00" or
-							// "AM" (or "am") in
-							// the original date
-							// string. If neither
-							// one is there,
-							// there's probably no
-							// time.
-							if ( strpos( $curValue, '00' ) === false &&
-								strpos( $curValue, 'AM' ) === false &&
-								strpos( $curValue, 'am' ) === false ) {
-								$precision = self::DATE_ONLY;
-							}
-							// Either way, we just
-							// need the date portion.
-							$tableFieldValues[$fieldName] = $datePortion;
-						}
-					}
-					$tableFieldValues[$fieldName . '__precision'] = $precision;
+				if ( $curValue == '' ) {
+					continue;
 				}
+
+				// Special handling if it's just a year. If
+				// it's a number and less than 8 digits, assume
+				// it's a year (hey, it could be a very large
+				// BC year). If it's 8 digits, it's probably a
+				// full date in the form YYYYMMDD.
+				if ( ctype_digit( $curValue ) && strlen( $curValue ) < 8 ) {
+					// Add a fake date - it will get
+					// ignored later.
+					$curValue = "$curValue-01-01";
+					$precision = self::YEAR_ONLY;
+				} else {
+					// Determine if there's a month but no
+					// day. There's no ideal way to do
+					// this, so: we'll just look for the
+					// total number of spaces, slashes and
+					// dashes, and if there's exactly one
+					// altogether, we'll/ guess that it's a
+					// month only.
+					$numSpecialChars = substr_count( $curValue, ' ' ) +
+						substr_count( $curValue, '/' ) + substr_count( $curValue, '-' );
+					if ( $numSpecialChars == 1 ) {
+						// No need to add anything -
+						// PHP will set it to the first
+						// of the month.
+						$precision = self::MONTH_ONLY;
+					} else {
+						// We have at least a full date.
+						if ( $fieldType == 'Date' ) {
+							$precision = self::DATE_ONLY;
+						}
+					}
+				}
+
+				$seconds = strtotime( $curValue );
+				// If the precision has already been set, then
+				// we know it doesn't include a time value -
+				// we can set the value already.
+				if ( $precision != null ) {
+					// Put into YYYY-MM-DD format.
+					$tableFieldValues[$fieldName] = date( 'Y-m-d', $seconds );
+				} else {
+					// It's a Datetime field, which
+					// may or may not have a time -
+					// check for that now.
+					$datePortion = date( 'Y-m-d', $seconds );
+					$timePortion = date( 'G:i:s', $seconds );
+					// If it's not right at midnight,
+					// there's definitely a time there.
+					$precision = self::DATE_AND_TIME;
+					if ( $timePortion !== '0:00:00' ) {
+						$tableFieldValues[$fieldName] = $datePortion . ' ' . $timePortion;
+					} else {
+						// It's midnight, so chances
+						// are good that there was no
+						// time specified, but how do
+						// we know for sure?
+						// Slight @HACK - look for
+						// either "00" or "AM" (or "am")
+						// in the original date string.
+						// If neither one is there,
+						// there's probably no time.
+						if ( strpos( $curValue, '00' ) === false &&
+							strpos( $curValue, 'AM' ) === false &&
+							strpos( $curValue, 'am' ) === false ) {
+							$precision = self::DATE_ONLY;
+						}
+						// Either way, we just
+						// need the date portion.
+						$tableFieldValues[$fieldName] = $datePortion;
+					}
+				}
+				$tableFieldValues[$fieldName . '__precision'] = $precision;
 			} elseif ( $fieldType == 'Integer' ) {
 				// Remove digit-grouping character.
 				global $wgCargoDigitGroupingCharacter;
@@ -404,7 +283,7 @@ class CargoStore {
 					// For coordinates, there are two more
 					// fields, for latitude and longitude.
 					if ( $fieldType == 'Coordinates' ) {
-						list( $latitude, $longitude) = self::parseCoordinatesString( $individualValue );
+						list( $latitude, $longitude) = CargoUtils::parseCoordinatesString( $individualValue );
 						$fieldValues['_lat'] = $latitude;
 						$fieldValues['_lon'] = $longitude;
 					}
@@ -415,7 +294,7 @@ class CargoStore {
 				$tableFieldValues[$fieldName . '__full'] = $tableFieldValues[$fieldName];
 				unset( $tableFieldValues[$fieldName] );
 			} elseif ( $fieldType == 'Coordinates' ) {
-				list( $latitude, $longitude) = self::parseCoordinatesString( $tableFieldValues[$fieldName] );
+				list( $latitude, $longitude) = CargoUtils::parseCoordinatesString( $tableFieldValues[$fieldName] );
 				// Rename the field.
 				$tableFieldValues[$fieldName . '__full'] = $tableFieldValues[$fieldName];
 				unset( $tableFieldValues[$fieldName] );

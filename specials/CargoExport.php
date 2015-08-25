@@ -170,7 +170,6 @@ class CargoExport extends UnlistedSpecialPage {
 			$queryResults = $sqlQuery->run();
 
 			foreach ( $queryResults as $queryResult ) {
-				$title = Title::newFromText( $queryResult['_pageName'] );
 				$eventDescription = '';
 				$firstField = true;
 				foreach ( $sqlQuery->mFieldDescriptions as $fieldName => $fieldDescription ) {
@@ -196,17 +195,27 @@ class CargoExport extends UnlistedSpecialPage {
 				if ( array_key_exists( 'name', $queryResult ) ) {
 					$eventTitle = $queryResult['name'];
 				} else {
+					// Get first field for the 'title' - not
+					// necessarily the page name.
 					$eventTitle = reset( $queryResult );
 				}
 
-				$displayedArray[] = array(
-					// Get first field for the 'title' - not
-					// necessarily the page name.
+				$eventDisplayDetails = array(
 					'title' => $eventTitle,
 					'start' => $queryResult[$dateFields[0]],
 					'description' => $eventDescription,
-					'link' => $title->getFullURL(),
 				);
+
+				// If we have the name of the page on which
+				// the event is defined, link to that -
+				// otherwise, don't link to anything.
+				// (In most cases, the _pageName field will
+				// also be the title of the event.)
+				if ( array_key_exists( '_pageName', $queryResult ) ) {
+					$title = Title::newFromText( $queryResult['_pageName'] );
+					$eventDisplayDetails['link'] = $title->getFullURL();
+				}
+				$displayedArray[] = $eventDisplayDetails;
 			}
 		}
 		// Sort by date, ascending.
@@ -267,14 +276,38 @@ class CargoExport extends UnlistedSpecialPage {
 		header( "Content-Type: text/csv" );
 		header( "Content-Disposition: attachment; filename=$filename" );
 
-		// We'll only use the first query, if there's more than one.
-		$sqlQuery = $sqlQueries[0];
-		$queryResults = $sqlQuery->run();
+		$queryResultsArray = array();
+		$allHeaders = array();
+		foreach( $sqlQueries as $sqlQuery ) {
+			$queryResults = $sqlQuery->run();
+			$allHeaders = array_merge( $allHeaders, array_keys( reset( $queryResults ) ) );
+			$queryResultsArray[] = $queryResults;
+		}
+
+		// Remove duplicates from headers array.
+		$allHeaders = array_unique( $allHeaders );
+
 		$out = fopen('php://output', 'w');
+
 		// Display header row.
-		fputcsv( $out, array_keys( reset( $queryResults ) ), $delimiter );
-		foreach( $queryResults as $queryResult ) {
-			fputcsv( $out, $queryResult, $delimiter );
+		fputcsv( $out, $allHeaders, $delimiter );
+
+		// Display the data.
+		foreach ( $queryResultsArray as $queryResults ) {
+			foreach ( $queryResults as $queryResultRow ) {
+				// Put in a blank if this row doesn't contain
+				// a certain column (this will only happen
+				// for compound queries).
+				$displayedRow = array();
+				foreach ( $allHeaders as $header ) {
+					if ( array_key_exists( $header, $queryResultRow ) ) {
+						$displayedRow[$header] = $queryResultRow[$header];
+					} else {
+						$displayedRow[$header] = null;
+					}
+				}
+				fputcsv( $out, $displayedRow, $delimiter );
+			}
 		}
 		fclose( $out );
 	}

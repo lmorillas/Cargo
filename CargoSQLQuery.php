@@ -94,15 +94,17 @@ class CargoSQLQuery {
 
 	/**
 	 * Throw an error if there are forbidden values in any of the
-	 * #cargo_query parameters -  some or all of them are potential
+	 * #cargo_query parameters - some or all of them are potential
 	 * security risks.
 	 *
 	 * It could be that, given the way #cargo_query is structured, only
 	 * some of the parameters need to be checked for these strings,
 	 * but we might as well validate all of them.
 	 *
-	 * The function setDescriptionsForFields() also does specific
-	 * validation of the "tables=" and "fields=" parameters.
+	 * The function CargoUtils::getTableSchemas() also does specific
+	 * validation of the "tables" parameter, while this class's
+	 * setDescriptionsForFields() does validation of the "fields="
+	 * parameter.
 	 */
 	public static function validateValues( $tablesStr, $fieldsStr, $whereStr, $joinOnStr, $groupByStr,
 		$havingStr, $orderByStr, $limitStr ) {
@@ -402,7 +404,7 @@ class CargoSQLQuery {
 					$description->mType = 'Date';
 				}
 			} elseif ( preg_match( "/^'.*'$/m", $fieldName ) ) {
-				// It's a quoted, literal string  - do nothing.
+				// It's a quoted, literal string - do nothing.
 			} else {
 				// It's a standard field - though if it's
 				// '_value', or ends in '__full', it's actually
@@ -881,7 +883,7 @@ class CargoSQLQuery {
 		$latDistance = $distanceInKM / 111;
 
 		// Convert the latitude string to a latitude number - code is
-		// copied from CargoStore::parseCoordinatesString().
+		// copied from CargoUtils::parseCoordinatesString().
 		$latIsNegative = false;
 		if ( strpos( $latString, 'S' ) > 0 ) {
 			$latIsNegative = true;
@@ -890,7 +892,7 @@ class CargoSQLQuery {
 		if ( is_numeric( $latString ) ) {
 			$latNum = floatval( $latString );
 		} else {
-			$latNum = CargoStore::coordinatePartToNumber( $latString );
+			$latNum = CargoUtils::coordinatePartToNumber( $latString );
 		}
 		if ( $latIsNegative ) {
 			$latNum *= -1;

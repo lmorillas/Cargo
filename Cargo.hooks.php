@@ -8,6 +8,39 @@
  */
 class CargoHooks {
 
+	public static function registerExtension() {
+		global $cgScriptPath, $wgScriptPath, $wgCargoFieldTypes, $wgCargoAllowedSQLFunctions, $wgGroupPermissions;
+
+		// Script path.
+		$cgScriptPath = $wgScriptPath . '/extensions/Cargo';
+
+		$wgCargoFieldTypes = array( 'Page', 'Text', 'Integer', 'Float', 'Date', 'Datetime', 'Boolean', 'Coordinates', 'Wikitext', 'File' );
+		$wgCargoAllowedSQLFunctions = array(
+			// Math functions
+			'COUNT', 'FLOOR', 'CEIL', 'ROUND',
+			'MAX', 'MIN', 'AVG', 'SUM', 'POWER', 'LN', 'LOG',
+			// String functions
+			'CONCAT', 'LOWER', 'LCASE', 'UPPER', 'UCASE', 'SUBSTRING', 'FORMAT',
+			// Date functions
+			'DATE', 'DATE_FORMAT', 'DATE_ADD', 'DATE_SUB', 'DATE_DIFF'
+		);
+
+		$wgGroupPermissions['sysop']['recreatecargodata'] = true;
+		$wgGroupPermissions['sysop']['deletecargodata'] = true;
+	}
+
+
+	public static function registerParserFunctions( &$parser ) {
+		$parser->setFunctionHook( 'cargo_declare', array( 'CargoDeclare', 'run' ) );
+		$parser->setFunctionHook( 'cargo_attach', array( 'CargoAttach', 'run' ) );
+		$parser->setFunctionHook( 'cargo_store', array( 'CargoStore', 'run' ) );
+		$parser->setFunctionHook( 'cargo_query', array( 'CargoQuery', 'run' ) );
+		$parser->setFunctionHook( 'cargo_compound_query', array( 'CargoCompoundQuery', 'run' ) );
+		$parser->setFunctionHook( 'recurring_event', array( 'CargoRecurringEvent', 'run' ) );
+		$parser->setFunctionHook( 'cargo_display_map', array( 'CargoDisplayMap', 'run' ) );
+		return true;
+	}
+
 	/**
 	 * Add date-related messages to Global JS vars in user language
 	 *
@@ -222,22 +255,16 @@ class CargoHooks {
 		return true;
 	}
 
-	public static function describeDBSchema( $updater = null ) {
-		$dir = dirname( __FILE__ );
-
+	public static function describeDBSchema( DatabaseUpdater $updater ) {
 		// DB updates
 		// For now, there's just a single SQL file for all DB types.
-		if ( $updater === null ) {
-			global $wgExtNewTables, $wgDBtype;
-			//if ( $wgDBtype == 'mysql' ) {
-			$wgExtNewTables[] = array( 'cargo_tables', "$dir/Cargo.sql" );
-			$wgExtNewTables[] = array( 'cargo_pages', "$dir/Cargo.sql" );
-			//}
-		} else {
-			//if ( $updater->getDB()->getType() == 'mysql' ) {
-			$updater->addExtensionUpdate( array( 'addTable', 'cargo_tables', "$dir/Cargo.sql", true ) );
-			$updater->addExtensionUpdate( array( 'addTable', 'cargo_pages', "$dir/Cargo.sql", true ) );
-			//}
+
+		if ( $updater->getDB()->getType() == 'mysql' || $updater->getDB()->getType() == 'sqlite' ) {
+			$updater->addExtensionTable( 'cargo_tables', __DIR__ . "/sql/Cargo.sql" );
+			$updater->addExtensionTable( 'cargo_pages', __DIR__ . "/sql/Cargo.sql" );
+		} elseif ( $updater->getDB()->getType() == 'postgres' ) {
+			$updater->addExtensionUpdate( array( 'addTable', 'cargo_tables', __DIR__ . "/sql/Cargo.pg.sql", true ) );
+			$updater->addExtensionUpdate( array( 'addTable', 'cargo_pages', __DIR__ . "/sql/Cargo.pg.sql", true ) );
 		}
 		return true;
 	}

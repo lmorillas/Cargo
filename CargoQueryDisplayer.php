@@ -61,7 +61,7 @@ class CargoQueryDisplayer {
 		}
 
 		$formatClass = null;
-		wfRunHooks( 'CargoGetFormatClass', array( $this->mFormat, &$formatClass ) );
+		Hooks::run( 'CargoGetFormatClass', array( $this->mFormat, &$formatClass ) );
 		if ( $formatClass != null ) {
 			return $formatClass;
 		}

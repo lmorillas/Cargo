@@ -6,27 +6,40 @@
  * @author Yaron Koren
  */
 
-if ( !defined( 'MEDIAWIKI' ) ) die();
+if ( function_exists( 'wfLoadExtension' ) ) {
+	wfLoadExtension( 'Cargo' );
+	// Keep i18n globals so mergeMessageFileList.php doesn't break
+	$wgMessagesDirs['Cargo'] = __DIR__ . '/i18n';
+	$wgExtensionMessagesFiles['CargoMagic'] = __DIR__ . '/Cargo.i18n.magic.php';
+	/* wfWarn(
+		'Deprecated PHP entry point used for Cargo extension. Please use wfLoadExtension instead, ' .
+		'see https://www.mediawiki.org/wiki/Extension_registration for more details.'
+	); */
+	return;
+}
 
-define( 'CARGO_VERSION', '0.9' );
+/* For Backword Compatibility */
+
+define( 'CARGO_VERSION', '0.10-alpha' );
 
 $wgExtensionCredits['parserhook'][] = array(
 	'path' => __FILE__,
 	'name' => 'Cargo',
+	'namemsg' => 'extensionname-cargo',
 	'version' => CARGO_VERSION,
 	'author' => 'Yaron Koren',
 	'url' => 'https://www.mediawiki.org/wiki/Extension:Cargo',
 	'descriptionmsg' => 'cargo-desc',
 );
 
-$dir = dirname( __FILE__ );
+$dir = __DIR__ . '/';
 
 // Script path.
 $cgScriptPath = $wgScriptPath . '/extensions/Cargo';
 
 $wgJobClasses['cargoPopulateTable'] = 'CargoPopulateTableJob';
 
-$wgHooks['ParserFirstCallInit'][] = 'cargoRegisterParserFunctions';
+$wgHooks['ParserFirstCallInit'][] = 'CargoHooks::registerParserFunctions';
 $wgHooks['MakeGlobalVariablesScript'][] = 'CargoHooks::setGlobalJSVariables';
 $wgHooks['PageContentSaveComplete'][] = 'CargoHooks::onPageContentSaveComplete';
 $wgHooks['ApprovedRevsRevisionApproved'][] = 'CargoHooks::onARRevisionApproved';
@@ -134,14 +147,11 @@ $wgGroupPermissions['sysop']['recreatecargodata'] = true;
 $wgAvailableRights[] = 'deletecargodata';
 $wgGroupPermissions['sysop']['deletecargodata'] = true;
 
-// Page properties
-$wgPageProps['CargoTableName'] = "The name of the database table that holds this template's data";
-$wgPageProps['CargoFields'] = 'The set of fields stored for this template';
-
 // ResourceLoader modules
 $wgResourceModules += array(
 	'ext.cargo.main' => array(
 		'styles' => 'Cargo.css',
+		'position' => 'top',
 		'localBasePath' => __DIR__,
 		'remoteExtPath' => 'Cargo'
 	),
@@ -176,9 +186,11 @@ $wgResourceModules += array(
 			'libs/ext.cargo.calendar.css',
 		),
 		'scripts' => array(
-			'libs/moment.js',
 			'libs/fullcalendar.js',
 			'libs/ext.cargo.calendar.js',
+		),
+		'dependencies' => array(
+			'moment',
 		),
 		'position' => 'top',
 		'localBasePath' => __DIR__,
@@ -232,6 +244,7 @@ $wgResourceModules += array(
 			'libs/nv.d3.js',
 			'libs/ext.cargo.nvd3.js',
 		),
+		'position' => 'top',
 		'localBasePath' => __DIR__,
 		'remoteExtPath' => 'Cargo'
 	),
@@ -243,17 +256,6 @@ $wgResourceModules += array(
         'remoteExtPath' => 'Cargo'
     ),
 );
-
-function cargoRegisterParserFunctions( &$parser ) {
-	$parser->setFunctionHook( 'cargo_declare', array( 'CargoDeclare', 'run' ) );
-	$parser->setFunctionHook( 'cargo_attach', array( 'CargoAttach', 'run' ) );
-	$parser->setFunctionHook( 'cargo_store', array( 'CargoStore', 'run' ) );
-	$parser->setFunctionHook( 'cargo_query', array( 'CargoQuery', 'run' ) );
-	$parser->setFunctionHook( 'cargo_compound_query', array( 'CargoCompoundQuery', 'run' ) );
-	$parser->setFunctionHook( 'recurring_event', array( 'CargoRecurringEvent', 'run' ) );
-	$parser->setFunctionHook( 'cargo_display_map', array( 'CargoDisplayMap', 'run' ) );
-	return true;
-}
 
 $wgCargoFieldTypes = array( 'Page', 'Text', 'Integer', 'Float', 'Date', 'Datetime', 'Boolean', 'Coordinates', 'Wikitext', 'File' );
 $wgCargoAllowedSQLFunctions = array(
