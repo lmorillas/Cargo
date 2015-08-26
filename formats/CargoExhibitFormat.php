@@ -125,6 +125,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     function createFacets( $facets ){
     // explode facets and create the div for each of them
         $text = '';
+        $text .= $this->createSearch( "Search" );
         foreach ($facets as $f) {
              $attrs = array(
                 'data-ex-role' => "facet",
@@ -132,11 +133,12 @@ class CargoExhibitFormat extends CargoDeferredFormat {
                 'data-ex-collapsed' => "true",
                 'data-ex-expression' => '.' . $f,
                 'data-ex-show-missing' => 'false',
-                'data-ex-facet-label' => ucfirst($f)
+                'data-ex-facet-label' => ucfirst($f),
+                'style' => "float: left; width: 24%; margin: 0 1% 0 0;"
                 );
         $text .=  Html::element( 'div', $attrs);
         }
-        return Html::rawElement( 'div', array("class" => "facets"), $text);
+        return Html::rawElement( 'div', array("class" => "facets", "style"=>"overflow: hidden; width: 100%;"), $text);
     }
 
     /**
@@ -148,7 +150,8 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $attrs = array(
             'data-ex-role' => "exhibit-facet",
             'data-ex-facet-class' => "TextSearch",
-            'data-ex-facet-label' => $title
+            'data-ex-facet-label' => $title,
+            'style' => "float: left; width: 24%; margin: 0 1% 0 0;"
             );
         return Html::element( 'div', $attrs);
     }
@@ -223,7 +226,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
 
         // Search
-        $text .=  $this->createSearch("Search");
+        // $text .=  $this->createSearch("Search");
 
         // lense
         $text .= $this->createLens($_field_list);
