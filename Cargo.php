@@ -252,6 +252,7 @@ $wgResourceModules += array(
         'scripts' => array(
             'libs/ext.cargo.exhibit.js'
         ),
+        'position' => 'top',
         'localBasePath' => __DIR__,
         'remoteExtPath' => 'Cargo'
     ),
