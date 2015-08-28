@@ -2,10 +2,20 @@
 
 // Exhibit is loaded with autocreate=false
 
-$(document).one("scriptsLoaded.exhibit", function() {
-    window.database = Exhibit.Database.create();
-});
+console.log("Cargado ext.cargo.exhibit 12");
 
+Exhibit.jQuery = jQuery;
+if (!Exhibit._jQueryExists) {
+    jQuery.noConflict();
+}
+Exhibit.triggerjQueryLoaded();
+
+
+jQuery(document).bind("scriptsLoaded.exhibit", function() {
+    console.log("creating database");
+    window.database = Exhibit.Database.create();
+    console.log("created database");
+});
 
 function loadDataIntoDB() {
     var links, link, importer;
@@ -24,16 +34,21 @@ function loadDataIntoDB() {
     }
 }
 
-$(document).one("registerJSONPImporters.exhibit", function(){
+Exhibit.jQuery(document).one("registerJSONPImporters.exhibit", function(){
     window.setTimeout(loadDataIntoDB, 0);
 });
 
-$(document).one( "dataload.exhibit", function() {
-
+function initExhibit(){
     Exhibit.create = function( database ) {
         return new Exhibit._Impl(database);
     };
 
+    console.log("creating exhibit");
     window.exhibit = Exhibit.create();
+    console.log("configuring from dom");
     window.exhibit.configureFromDOM();
+}
+
+Exhibit.jQuery(document).one( "dataload.exhibit", function() {
+    window.setTimeout( initExhibit, 0 ) ;
 });
