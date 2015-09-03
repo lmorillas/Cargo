@@ -250,7 +250,7 @@ $wgResourceModules += array(
 	),
     'ext.cargo.exhibit' => array(
         'scripts' => array(
-            'libs/ext.cargo.exhibit.js'
+            'libs/ext.cargo.exhibit.js',
         ),
         'position' => 'top',
         'localBasePath' => __DIR__,

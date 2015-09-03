@@ -95,7 +95,8 @@
 		"CargoFilterValue": "drilldown/CargoFilterValue.php",
 		"CargoDrilldownUtils": "drilldown/CargoDrilldownUtils.php",
 		"CargoDrilldown": "drilldown/CargoSpecialDrilldown.php",
-		"CargoDrilldownPage": "drilldown/CargoSpecialDrilldown.php"
+		"CargoDrilldownPage": "drilldown/CargoSpecialDrilldown.php",
+        "CargoExhibitFormat": "formats/CargoExhibitFormat.php"
 	},
 	"ResourceModules": {
 		"ext.cargo.main": {
@@ -182,7 +183,13 @@
 				"libs/ext.cargo.nvd3.js"
 			],
 			"position": "top"
-		}
+		},
+        "ext.cargo.exhibit": {
+            "scripts": [
+                "libs/ext.cargo.exhibit.js"
+            ],
+            "position": "top"
+        }
 	},
 	"ResourceFileModulePaths": {
 		"localBasePath": "",
