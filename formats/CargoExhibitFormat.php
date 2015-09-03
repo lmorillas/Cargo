@@ -187,10 +187,9 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // resulting output
         $text = "";
 
-        // Add necessary JS scripts.
-        //  Exhibit Scripts
-        $ex_script = '<script src="http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js?autoCreate=false"></script>';
-        $this->mOutput->addHeadItem( $ex_script, $ex_script );
+        // Now js is loaded after page is ready
+        // $ex_script = '<script src="http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js?autoCreate=false&amp;bundle=false"></script>';
+        // $this->mOutput->addHeadItem( $ex_script, $ex_script );
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
 
@@ -216,14 +215,13 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $queryParams['format'] = 'csv';
         $queryParams['limit'] = '1000';
 
-        $dataurl = $ce->getFullURL( $queryParams );
+        $dataurl = htmlentities( $ce->getFullURL( $queryParams ) );
 
         // Data imported as csv
-        $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" $csv_properties />";
+        $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" data-ex-hasColumnTitles=\"true\" $csv_properties />";
         $this->mOutput->addHeadItem($datalink, $datalink);
 
         $this->displayParams = $displayParams;
-
 
         // Search
         // $text .=  $this->createSearch("Search");
