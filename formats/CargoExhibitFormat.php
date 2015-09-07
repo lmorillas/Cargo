@@ -38,9 +38,9 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
 
     function createMap(){
-        #$maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
+        $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
         #$maps_script = '<script src="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"></script>';
-        #$this->mOutput->addHeadItem( $maps_script, $maps_script );
+        $this->mOutput->addHeadItem( $maps_script, $maps_script );
 
          // div
         $attrs = array();
