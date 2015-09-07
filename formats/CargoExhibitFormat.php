@@ -38,8 +38,9 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
 
     function createMap(){
-        $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
-        $this->mOutput->addHeadItem( $maps_script, $maps_script );
+        #$maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
+        #$maps_script = '<script src="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"></script>';
+        #$this->mOutput->addHeadItem( $maps_script, $maps_script );
 
          // div
         $attrs = array();
@@ -200,13 +201,11 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             }
         }
 
-        // array copy
-        $_field_list = $field_list;
         $csv_properties = '';
-        if ( ! in_array( "label", $_field_list ) ){
+        if ( ! in_array( "label", $field_list ) ){
             // first field will be label!
-            $_field_list[0] = 'label';
-            $csv_properties = 'data-ex-properties="' . implode( ',', $_field_list) . '"';
+            $field_list[0] = 'label';
+            $csv_properties = 'data-ex-properties="' . implode( ',', $field_list) . '"';
         }
 
         $queryParams = $this->sqlQueriesToQueryParams( $sqlQueries );
@@ -218,7 +217,8 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $dataurl = htmlentities( $ce->getFullURL( $queryParams ) );
 
         // Data imported as csv
-        $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" data-ex-hasColumnTitles=\"true\" $csv_properties />";
+        $datalink = "<link href=\"$dataurl\" type=\"text/csv\" rel=\"exhibit/data\" data-ex-has-column-titles=\"true\" $csv_properties />";
+
         $this->mOutput->addHeadItem($datalink, $datalink);
 
         $this->displayParams = $displayParams;
