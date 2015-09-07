@@ -190,7 +190,8 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
         // Now js is loaded after page is ready
         // $ex_script = '<script src="http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js?autoCreate=false&amp;bundle=false"></script>';
-        // $this->mOutput->addHeadItem( $ex_script, $ex_script );
+        $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js?autoCreate=false"></script>';
+        $this->mOutput->addHeadItem( $ex_script, $ex_script );
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
 
