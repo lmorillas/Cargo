@@ -38,7 +38,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
 
     function createMap(){
-        $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"/>';
+        $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/HEAD/extensions/map/map-extension.js"/>';
         #$maps_script = '<script src="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"></script>';
         $this->mOutput->addHeadItem( $maps_script, $maps_script );
 
@@ -67,7 +67,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
     function createTimeline(){
         // timeline script
-        $timeline_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/time/time-extension.js"/>';
+        $timeline_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/HEAD/extensions/time/time-extension.js"/>';
         //$timeline_script = '<script src="http://api.simile-widgets.org/exhibit/current/extensions/time/time-extension.js"></script>';
         $this->mOutput->addHeadItem( $timeline_script, $timeline_script );
 
@@ -191,8 +191,8 @@ class CargoExhibitFormat extends CargoDeferredFormat {
 
         // Now js is loaded after page is ready
         // $ex_script = '<script src="http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js?autoCreate=false&amp;bundle=false"></script>';
-        $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js?autoCreate=false"></script>';
-        $this->mOutput->addHeadItem( $ex_script, $ex_script );
+        // $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js?autoCreate=false"></script>';
+        // $this->mOutput->addHeadItem( $ex_script, $ex_script );
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
 
@@ -274,9 +274,6 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         else {
             $text .=  $text_views;
         }
-        //$ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js?autoCreate=false&bundle=false"></script>';
-        //$this->mOutput->addHeadItem( $ex_script, $ex_script );
-
 
         return $text;
     }
