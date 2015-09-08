@@ -4,15 +4,17 @@
 
 
 
-console.log("running ext.cargo.exhibit 80");
-
-// jQuery(document).on("scriptsLoaded.exhibit", function(evt) {
-jQuery(document).on("staticComponentsRegistered.exhibit", function() {
-    //console.log("scripts loaded ...");
-    //Exhibit.autoCreate();
+console.log("running ext.cargo.exhibit 90");
+jQuery(document).ready(function() {
+    console.log(" doc ready ");
+    jQuery(document).bind("staticComponentsRegistered.exhibit", function(evt) {
+        console.log("Static components registered ... ");
+        Exhibit.autoCreate();
 });
 
+});
 
+/*
 jQuery(document).on("staticComponentsRegistered.exhibit", function() {
    // window.database.loadLinks();
     console.log("static components registered ...");
@@ -87,4 +89,3 @@ jQuery(document).on("exhibitConfigured.exhibit", function(evt, ex) {
 jQuery(document).on("loadExtensions.exhibit", function(evt) {
     console.log("loadExtensions.exhibit");
 });
-

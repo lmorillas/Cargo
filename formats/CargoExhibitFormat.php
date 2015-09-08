@@ -68,6 +68,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     function createTimeline(){
         // timeline script
         $timeline_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/current/extensions/time/time-extension.js"/>';
+        //$timeline_script = '<script src="http://api.simile-widgets.org/exhibit/current/extensions/time/time-extension.js"></script>';
         $this->mOutput->addHeadItem( $timeline_script, $timeline_script );
 
         // div
@@ -273,6 +274,9 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         else {
             $text .=  $text_views;
         }
+        //$ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js?autoCreate=false&bundle=false"></script>';
+        //$this->mOutput->addHeadItem( $ex_script, $ex_script );
+
 
         return $text;
     }
