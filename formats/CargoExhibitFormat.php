@@ -159,7 +159,8 @@ class CargoExhibitFormat extends CargoDeferredFormat {
     }
 
     function createLens ($_field_list) {
-        $lens = '<table data-ex-role="lens" class="cargoTable" style="display: none;">';
+        $lens = '<table data-ex-role="lens" class="cargoTable" style="display:
+        none; width:100%;">';
         $lens .= '<caption><strong data-ex-content=".label"></strong></caption>';
         foreach( $_field_list as $field) {
             if ($field != "label" and strpos( $field, '__' ) === false and
@@ -193,6 +194,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // $ex_script = '<script src="http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js?autoCreate=false&amp;bundle=false"></script>';
         // $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js?autoCreate=false"></script>';
         // $this->mOutput->addHeadItem( $ex_script, $ex_script );
+        global $cgScriptPath;
+
+        $exhibit_busy = $cgScriptPath . "/skins/loading.gif";
+        $text .= '<img id="loading_exhibit" src="'. $exhibit_busy .'" alt="Loading Exhibit" style="display:None;" >';
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
 
@@ -229,7 +234,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // $text .=  $this->createSearch("Search");
 
         // lense
-        $text .= $this->createLens($_field_list);
+        $text .= $this->createLens($field_list);
 
         // Facets
         if ( array_key_exists( 'facets', $displayParams ) ) {

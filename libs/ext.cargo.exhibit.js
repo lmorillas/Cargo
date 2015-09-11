@@ -13,12 +13,19 @@ Exhibit_MapExtension_urlPrefix = Exhibit_urlPrefix + "extensions/map/";
 
 ex_url = "http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js";
 
-// get exhibit-api js
-jQuery.getScript(ex_url);
+jQuery.ajax({
+    beforeSend: function(){
+        jQuery("#loading_exhibit").show();
+    },
+    url: ex_url,
+    dataType: "script",
+    cache: true
+});
 
 // important: autoCreate=false
 jQuery(document).on("scriptsLoaded.exhibit", function(evt) {
     Exhibit.params.autoCreate = false;
+    jQuery("#loading_exhibit").hide();
 });
 
 jQuery(document).on("staticComponentsRegistered.exhibit", function(evt) {
