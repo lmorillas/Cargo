@@ -194,6 +194,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         // $ex_script = '<script src="http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js?autoCreate=false&amp;bundle=false"></script>';
         // $ex_script = '<script src="http://api.simile-widgets.org/exhibit/current/exhibit-api.js?autoCreate=false"></script>';
         // $this->mOutput->addHeadItem( $ex_script, $ex_script );
+        global $cgScriptPath;
+
+        $exhibit_busy = $cgScriptPath . "/skins/loading.gif";
+        $text .= '<img id="loading_exhibit" src="'. $exhibit_busy .'" alt="Loading Exhibit" style="display:None;" >';
 
         $ce = SpecialPage::getTitleFor( 'CargoExport' );
 
