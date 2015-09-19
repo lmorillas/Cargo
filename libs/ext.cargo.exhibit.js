@@ -7,10 +7,6 @@
 Exhibit_urlPrefix = "http://api.simile-widgets.org/exhibit/HEAD/";
 Exhibit_TimeExtension_urlPrefix = Exhibit_urlPrefix + "extensions/time/";
 Exhibit_MapExtension_urlPrefix = Exhibit_urlPrefix + "extensions/map/";
-Timeline_ajax_url="http://YOUR_SERVER/javascripts/timeline/timeline_ajax/simile-ajax-api.js";
-Timeline_urlPrefix='http://YOUR_SERVER/javascripts/timeline/timeline_js/';
-Timeline_parameters='bundle=true';
-
 
 window.Exhibit_parameters="?autoCreate=false";
 
