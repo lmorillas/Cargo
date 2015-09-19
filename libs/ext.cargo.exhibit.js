@@ -8,6 +8,8 @@ Exhibit_urlPrefix = "http://api.simile-widgets.org/exhibit/HEAD/";
 Exhibit_TimeExtension_urlPrefix = Exhibit_urlPrefix + "extensions/time/";
 Exhibit_MapExtension_urlPrefix = Exhibit_urlPrefix + "extensions/map/";
 
+window.Exhibit_parameters="?autoCreate=false";
+
 // TODO posibility of local files
 //ex_url = "http://beta.programaseducativosaragon.es/mw126/extensions/Cargo/libs/Exhibit/exhibit-api.js"
 
@@ -24,7 +26,6 @@ jQuery.ajax({
 
 // important: autoCreate=false
 jQuery(document).on("scriptsLoaded.exhibit", function(evt) {
-    Exhibit.params.autoCreate = false;
     jQuery("#loading_exhibit").hide();
 });
 
