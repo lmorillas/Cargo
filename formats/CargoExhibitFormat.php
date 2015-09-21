@@ -132,7 +132,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
              $attrs = array(
                 'data-ex-role' => "facet",
                 'data-ex-collapsible' => "true",
-                'data-ex-height' => "6em",
+                //'data-ex-height' => "6em",
                 'data-ex-expression' => '.' . $f,
                 'data-ex-show-missing' => 'false',
                 'data-ex-facet-label' => ucfirst($f),
