@@ -10,11 +10,14 @@ Exhibit_MapExtension_urlPrefix = Exhibit_urlPrefix + "extensions/map/";
 
 window.Exhibit_parameters="?autoCreate=false";
 
-// TODO posibility of local files
-//ex_url = "http://beta.programaseducativosaragon.es/mw126/extensions/Cargo/libs/Exhibit/exhibit-api.js"
+window.tableStyler = function(table, database){
+    $(table).addClass("cargoTable");
+};
 
 ex_url = "http://api.simile-widgets.org/exhibit/HEAD/exhibit-api.js";
+
 jQuery("#loading_exhibit").show();
+
 //jQuery.getScript(ex_url);
 
 jQuery.ajax({

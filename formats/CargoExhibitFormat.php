@@ -9,7 +9,7 @@
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'height', 'width', 'zoom', 'sort', 'view', 'columns', 'facets', 'start', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
+        return array( 'view', 'columns', 'sort', 'facets', 'start', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
     }
 
 
@@ -106,6 +106,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $attrs['data-ex-role'] = 'view';
         $attrs['data-ex-view-class'] = 'Tabular';
         $attrs["data-ex-paginate"] = "true";
+        $attrs["data-ex-table-styler"] ="tableStyler";
 
         $attrs["data-ex-columns"] = implode(',',
             array_map("CargoExhibitFormat::concatenate_dot", $field_list));
