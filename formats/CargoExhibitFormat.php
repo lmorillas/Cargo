@@ -9,7 +9,7 @@
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'view', 'columns', 'sort', 'facets', 'start', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center' );
+        return array( 'view', 'columns', 'sort', 'facets', 'start', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center', 'datalabel' );
     }
 
 
@@ -247,6 +247,16 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $text .= $this->createFacets( array_slice($field_list, 0, 3));
         }
 
+        if ( array_key_exists( 'datalabel', $displayParams ) ) {
+            $datalabel = trim($displayParams['datalabel']);
+            $dataplural = $datalabel . 's';
+            $data_label_link = <<<EOLABEL
+<link href="#cargoExhibit" type="text/html" rel="exhibit/data"
+data-ex-item-type="Item" data-ex-label="$datalabel" data-ex-plural-label="$dataplural" />
+EOLABEL;
+            $this->mOutput->addHeadItem($data_label_link, $data_label_link);
+        }
+
         // View
         $this->views = array();
 
@@ -257,7 +267,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
             $this->automateViews($sqlQueries);
         }
 
-        $text_views = '';
+        $text_views = '<div id="cargoExhibit">';
 
         foreach($this->views as $view){
             switch ( $view ) {
@@ -275,10 +285,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         if ( count($this->views) > 1 ){
             $text .=  Html::rawElement( 'div',
                 array('data-ex-role'=>"viewPanel"),
-                $text_views);
+                $text_views . '</div>');
         }
         else {
-            $text .=  $text_views;
+            $text .=  $text_views . '</div>';
         }
 
         return $text;
