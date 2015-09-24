@@ -5,13 +5,11 @@
  * Adds exhibit format to cargo queries
  */
 
-
 class CargoExhibitFormat extends CargoDeferredFormat {
 
     function allowedParameters() {
-        return array( 'view', 'columns', 'sort', 'facets', 'start', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'latlng', 'zoom', 'center', 'datalabel' );
+        return array( 'view', 'facets', 'end', 'color', 'topunit', 'toppx', 'bottompx', 'datalabel' );
     }
-
 
     /**
      * @param string $p
@@ -25,19 +23,10 @@ class CargoExhibitFormat extends CargoDeferredFormat {
      **/
     function to_ex_param( $param_list ) {
         $params = explode( ',' , $param_list);
-
         return implode(',', array_map("CargoExhibitFormat::concatenate_dot", $params ) );
     }
 
-
-    function sortKey(){
-        if ( array_key_exists( 'sort', $this->displayParams ) ) {
-             $attrs['data-ex-orders'] = $this->to_ex_param($this->displayParams['sort']);
-         }
-    }
-
-
-    function createMap(){
+    function createMap( $sqlQueries ){
         $maps_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/HEAD/extensions/map/map-extension.js"/>';
         #$maps_script = '<script src="http://api.simile-widgets.org/exhibit/current/extensions/map/map-extension.js"></script>';
         $this->mOutput->addHeadItem( $maps_script, $maps_script );
@@ -47,25 +36,23 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $attrs['data-ex-role'] = 'view';
         $attrs["data-ex-view-class"] = "Map";
 
-        if ( array_key_exists( "latlng", $this->displayParams ) ) {
-            $attrs["data-ex-latlng"] = $this->concatenate_dot($this->displayParams['latlng']);
+        if ( ! array_key_exists( "latlng", $this->displayParams ) ) {
+            $tmp = $this->hasCoordinates( $sqlQueries );
+            if ( count($tmp) > 0 ){
+                $this->displayParams['latlng'] = $tmp[0];
+            }
         }
+        $attrs["data-ex-latlng"] = $this->concatenate_dot($this->displayParams['latlng']);
+        $attrs["data-ex-autoposition"] = "true";
+
         if ( array_key_exists( "color", $this->displayParams ) ) {
             $attrs["data-ex-color-key"] = $this->concatenate_dot($this->displayParams['color']);
         }
-        if ( array_key_exists( "center", $this->displayParams ) ) {
-            $attrs["data-ex-center"] = $this->displayParams['center'];
-        }
-        else {
-            $attrs["data-ex-autoposition"] = "true";
-        }
-        if ( array_key_exists( "zoom", $this->displayParams ) ) {
-            $attrs["data-ex-zoom"] = $this->displayParams['zoom'];
-        }
+
         return Html::element( 'div', $attrs );
     }
 
-    function createTimeline(){
+    function createTimeline( $sqlQueries ){
         // timeline script
         $timeline_script = '<link rel="exhibit-extension" href="http://api.simile-widgets.org/exhibit/HEAD/extensions/time/time-extension.js"/>';
         //$timeline_script = '<script src="http://api.simile-widgets.org/exhibit/current/extensions/time/time-extension.js"></script>';
@@ -76,9 +63,15 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $attrs['data-ex-role'] = 'view';
         $attrs["data-ex-view-class"] = "Timeline";
 
-        if ( array_key_exists( "start", $this->displayParams ) ) {
-            $attrs["data-ex-start"] = $this->concatenate_dot($this->displayParams['start']);
+        if ( ! array_key_exists( "start", $this->displayParams ) ) {
+            $tmp = $this->hasDate( $sqlQueries );
+                    if ( count($tmp) > 0 ){
+                        $this->displayParams['start'] = $tmp[0];
+                    }
         }
+
+        $attrs["data-ex-start"] = $this->concatenate_dot($this->displayParams['start']);
+
         if ( array_key_exists( "end", $this->displayParams ) ) {
             $attrs["data-ex-end"] = $this->concatenate_dot($this->displayParams['end']);
         }
@@ -111,16 +104,7 @@ class CargoExhibitFormat extends CargoDeferredFormat {
         $attrs["data-ex-columns"] = implode(',',
             array_map("CargoExhibitFormat::concatenate_dot", $field_list));
 
-        if ( array_key_exists( "labels", $this->displayParams ) ) {
-            $attrs["data-ex-column-labels"] = $this->displayParams['labels'];
-        }
-        else {
-            $attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst", $field_list));
-        }
-
-        if ( array_key_exists( 'sort', $this->displayParams ) ) {
-             $attrs['data-ex-orders'] = $this->to_ex_param($this->displayParams['sort']);
-         }
+        $attrs["data-ex-column-labels"] = implode(',', array_map("ucfirst", $field_list));
 
         return Html::element( 'div', $attrs );
     }
@@ -261,21 +245,23 @@ EOLABEL;
         $this->views = array();
 
         if ( array_key_exists( 'view', $displayParams) ){
-            $this->views = array_map( 'ucfirst', explode(',', $displayParams['view']));
+            $this->views = array_map( 'ucfirst', array_map( 'trim', explode(',', $displayParams['view'])));
         }
         else {  // default views:  $this->views
-            $this->automateViews($sqlQueries);
+            $this->automateViews( $sqlQueries );
         }
 
-        $text_views = '<div id="cargoExhibit">';
+        $text .= '<div id="cargoExhibit">';
+
+        $text_views = "";
 
         foreach($this->views as $view){
             switch ( $view ) {
                 case "Timeline":
-                    $text_views = $text_views . $this->createTimeline();
+                    $text_views = $text_views . $this->createTimeline( $sqlQueries );
                     break;
                 case "Map":
-                    $text_views = $text_views . $this->createMap();
+                    $text_views = $text_views . $this->createMap( $sqlQueries );
                     break;
                 case "Tabular":
                     $text_views = $text_views . $this->createTabular($field_list);
@@ -285,13 +271,13 @@ EOLABEL;
         if ( count($this->views) > 1 ){
             $text .=  Html::rawElement( 'div',
                 array('data-ex-role'=>"viewPanel"),
-                $text_views . '</div>');
+                $text_views );
         }
         else {
-            $text .=  $text_views . '</div>';
+            $text .=  $text_views ;
         }
 
-        return $text;
+        return $text . '</div>' ;
     }
 
     /**
@@ -333,7 +319,7 @@ EOLABEL;
         return $coordinatesFields;
     }
 
-    function hasDate($sqlQueries){
+    function hasDate( $sqlQueries ){
         $dateFields = array();
 
         foreach ( $sqlQueries as $query){
